@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prophet Vincenzo — Elite Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #070b1f;
+      --bg-mid: #0f1535;
+      --accent-gold: #d4af37;
+      --accent-gold-light: #f9d868;
+      --text-main: #e2e8f0;
+      --text-dim: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --correct: #10b981;
+      --wrong: #ef4444;
+      --skipped: #f59e0b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(ellipse at top, var(--bg-mid) 0%, var(--bg-deep) 100%) fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+    .app-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .screen { display: none; animation: fadeIn 0.45s ease both; }
+    .screen.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero {
+      text-align: center;
+      padding: 64px 28px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 3.2rem;
+      background: linear-gradient(135deg, var(--accent-gold-light), var(--accent-gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .quiz-meta {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .quiz-meta span {
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      color: var(--accent-gold-light);
+    }
+    .btn-primary, .btn-secondary, .btn-success {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-gold), #b8942a);
+      color: #0a0e27;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(212, 175, 55, 0.45);
+    }
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+    .btn-success {
+      background: linear-gradient(135deg, var(--correct), #059669);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    }
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(16, 185, 129, 0.4);
+    }
+    .hidden { display: none !important; }
+    .quiz-header {
+      display: grid;
+      grid-template-columns: 72px 1fr 44px;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 14px 18px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .timer-container {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+    .timer-ring {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .timer-bg {
+      fill: none;
+      stroke: rgba(255,255,255,0.1);
+      stroke-width: 6;
+    }
+    .timer-progress {
+      fill: none;
+      stroke: var(--accent-gold);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+    .timer-text {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-main);
+    }
+    .header-center { display: flex; flex-direction: column; gap: 8px; }
+    .progress-container {
+      height: 7px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+    .question-counter {
+      font-weight: 600;
+      color: var(--accent-gold-light);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+    }
+    .nav-toggle {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-toggle:hover { background: rgba(255,255,255,0.08); }
+    .nav-panel {
+      margin-bottom: 16px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      animation: fadeIn 0.25s ease;
+    }
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 8px;
+    }
+    .nav-dot {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-variant-numeric: tabular-nums;
+    }
+    .nav-dot.answered {
+      background: rgba(16,185,129,0.18);
+      color: var(--correct);
+      border-color: rgba(16,185,129,0.4);
+    }
+    .nav-dot.current {
+      box-shadow: 0 0 0 2px var(--accent-gold);
+      color: #fff;
+      border-color: var(--accent-gold);
+    }
+    .nav-dot:hover { transform: scale(1.08); }
+    .question-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      margin-bottom: 22px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    }
+    .question-text {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      line-height: 1.55;
+      margin-bottom: 26px;
+      color: #fff;
+    }
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .option-btn {
+      text-align: left;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 16px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.98rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      line-height: 1.4;
+    }
+    .option-btn::before {
+      content: attr(data-label);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: var(--text-dim);
+    }
+    .option-btn:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(212, 175, 55, 0.35);
+      transform: translateX(5px);
+    }
+    .option-btn.selected {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold-light);
+    }
+    .option-btn.selected::before {
+      background: var(--accent-gold);
+      color: #0a0e27;
+    }
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .results-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 44px 36px;
+      text-align: center;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    .results-card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      margin-bottom: 26px;
+      color: var(--accent-gold-light);
+    }
+    .score-circle {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent-gold) var(--score-deg, 0deg), rgba(255,255,255,0.05) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 34px;
+      position: relative;
+      box-shadow: 0 0 40px rgba(212,175,55,0.15);
+    }
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      width: 138px;
+      height: 138px;
+      border-radius: 50%;
+      background: var(--bg-deep);
+    }
+    #score-percent {
+      position: relative;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent-gold-light);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+    }
+    .stat span {
+      display: block;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat:nth-child(1) span { color: var(--correct); }
+    .stat:nth-child(2) span { color: var(--wrong); }
+    .stat:nth-child(3) span { color: var(--skipped); }
+    .stat:nth-child(4) span { color: var(--accent-gold-light); }
+    .results-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .review-header h2 {
+      font-family: 'Cinzel', serif;
+      color: var(--accent-gold-light);
+      font-size: 1.6rem;
+    }
+    .review-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 72vh;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .review-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .review-card.correct   { border-left: 4px solid var(--correct); }
+    .review-card.wrong     { border-left: 4px solid var(--wrong); }
+    .review-card.skipped   { border-left: 4px solid var(--skipped); }
+    .review-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .review-top h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #fff;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+    .badge.correct   { background: rgba(16,185,129,0.12); color: var(--correct); }
+    .badge.wrong     { background: rgba(239,68,68,0.12); color: var(--wrong); }
+    .badge.skipped   { background: rgba(245,158,11,0.12); color: var(--skipped); }
+    .review-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .review-opt {
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid transparent;
+      font-size: 0.92rem;
+      color: var(--text-main);
+    }
+    .review-opt.correct-ans {
+      border-color: var(--correct);
+      background: rgba(16,185,129,0.1);
+      color: #a7f3d0;
+    }
+    .review-opt.wrong-ans {
+      border-color: var(--wrong);
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      text-decoration: line-through;
+    }
+    .review-exp {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+      background: rgba(255,255,255,0.02);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-gold);
+    }
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 2.2rem; }
+      .quiz-header { grid-template-columns: 58px 1fr 40px; gap: 10px; padding: 12px; }
+      .timer-container { width: 52px; height: 52px; }
+      .timer-text { font-size: 0.72rem; }
+      .nav-grid { grid-template-columns: repeat(5, 1fr); }
+      .question-card { padding: 22px; }
+      .question-text { font-size: 1.1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .results-card { padding: 28px 22px; }
+      .score-circle { width: 140px; height: 140px; }
+      .score-circle::before { width: 114px; height: 114px; }
+      #score-percent { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- LANDING SCREEN -->
+    <div id="landing-screen" class="screen active">
+      <div class="hero">
+        <h1>Prophet Vincenzo</h1>
+        <p class="subtitle">Elite MCQ Challenge</p>
+        <div class="quiz-meta">
+          <span>📚 50 Questions</span>
+          <span>⏱️ 15 Minutes</span>
+          <span>🔐 Crypto-Shuffled</span>
+        </div>
+        <button id="start-btn" class="btn-primary">Begin Quiz</button>
+      </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen">
+      <header class="quiz-header">
+        <div class="timer-container" title="Time Remaining">
+          <svg class="timer-ring" viewBox="0 0 100 100">
+            <circle class="timer-bg" cx="50" cy="50" r="45" />
+            <circle class="timer-progress" cx="50" cy="50" r="45" />
+          </svg>
+          <span id="timer-text" class="timer-text">15:00</span>
+        </div>
+
+        <div class="header-center">
+          <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="question-counter" id="question-counter">1 / 50</div>
+        </div>
+
+        <button id="nav-toggle" class="nav-toggle" title="Question Navigator">☰</button>
+      </header>
+
+      <div id="nav-panel" class="nav-panel hidden">
+        <div class="nav-grid" id="nav-grid"></div>
+      </div>
+
+      <main class="quiz-main">
+        <div id="question-card" class="question-card">
+          <h2 id="question-text" class="question-text">Loading…</h2>
+          <div id="options-container" class="options-container"></div>
+        </div>
+      </main>
+
+      <footer class="quiz-footer">
+        <button id="prev-btn" class="btn-secondary" disabled>← Previous</button>
+        <button id="next-btn" class="btn-primary">Next →</button>
+        <button id="submit-btn" class="btn-success hidden">Submit Quiz</button>
+      </footer>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="results-screen" class="screen">
+      <div class="results-card">
+        <h2>Quiz Complete</h2>
+        <div class="score-circle" id="score-circle">
+          <span id="score-percent">0%</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat"><span id="stat-correct">0</span> Correct</div>
+          <div class="stat"><span id="stat-wrong">0</span> Wrong</div>
+          <div class="stat"><span id="stat-skipped">0</span> Skipped</div>
+          <div class="stat"><span id="stat-time">00:00</span> Time Used</div>
+        </div>
+        <div class="results-actions">
+          <button id="review-btn" class="btn-primary">Review Answers</button>
+          <button id="restart-btn" class="btn-secondary">Try Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW SCREEN -->
+    <div id="review-screen" class="screen">
+      <header class="review-header">
+        <h2>Answer Review</h2>
+        <button id="close-review-btn" class="btn-secondary">← Back to Results</button>
+      </header>
+      <div id="review-container" class="review-container"></div>
+    </div>
+
+  </div>
+
+  <!-- ===================== QUESTION DATA ===================== -->
+  <script>
+  window.ALL_QUESTIONS = [
+    {
+      id: 1,
+      q: "How old is Vincenzo at the very beginning of the story?",
+      opts: ["25 years old", "27 years old", "30 years old", "22 years old"],
+      ans: 1,
+      exp: "Vincenzo is 27 years old at the start of the story, while his sister Vita is 21."
+    },
+    {
+      id: 2,
+      q: "How many years had Vincenzo been serving God when the story opens?",
+      opts: ["25 years", "27 years", "21 years", "22 years"],
+      ans: 3,
+      exp: "Vincenzo states: 'I've used 22 years of my life to serve God.'"
+    },
+    {
+      id: 3,
+      q: "What did Vincenzo's grandfather do even before Vincenzo was conceived?",
+      opts: ["Prophesied he would be a great prophet", "Named him Vincenzo in a dream", "Donated him to God", "Had a vision of him healing the nations"],
+      ans: 2,
+      exp: "His grandad had donated him to God before he was even conceived in his mother's womb."
+    },
+    {
+      id: 4,
+      q: "Who jotted down the song Vincenzo sang in his sleep at the opening of the story?",
+      opts: ["His mother, Dr. Jewel", "Hadassah", "Norabel", "Vita"],
+      ans: 3,
+      exp: "Vita came to his room, saw him singing in his sleep, then ran to his desk and jotted down the songs in a journal."
+    },
+    {
+      id: 5,
+      q: "What does the title 'Rav' mean, as Vincenzo uses it for Papa Noah?",
+      opts: ["A close friend and prayer partner", "An elder or senior prophet", "A spiritual father chosen by God", "A rabbi — one who holds authority or acts as a personal mentor"],
+      ans: 3,
+      exp: "Vincenzo explains: 'Rav means a rabbi, one who holds a position of authority or who acts as a personal mentor.'"
+    },
+    {
+      id: 6,
+      q: "Why did Papa Noah insist Vincenzo remain in his parents' house despite owning more than ten mansions?",
+      opts: ["To maintain humility as a man of God", "To stay close to his ministry base", "Because he was not emotionally strong enough to live alone", "To protect him from dangerous people"],
+      ans: 2,
+      exp: "The story states: 'Now I understand it all. I was not strong enough emotionally living alone.'"
+    },
+    {
+      id: 7,
+      q: "What is Vincenzo's mother widely known as, even after becoming a professor?",
+      opts: ["Professor Nayel", "Mrs. Vincenzo", "Dr. Jewel", "Elder Jewel"],
+      ans: 2,
+      exp: "Even though mom has become a professor, she still prefers to be called Dr. Jewel."
+    },
+    {
+      id: 8,
+      q: "Which of Vincenzo's sisters is described as a professional singer with a 'euphonious voice'?",
+      opts: ["Norabel", "Vita", "Mylah", "Hadassah"],
+      ans: 3,
+      exp: "Hadassah is described as a professional singer with a euphonious voice — beautiful, pleasant, and indeed a great singer."
+    },
+    {
+      id: 9,
+      q: "What is Vita's primary talent or calling in life?",
+      opts: ["Singing and leading worship", "Playing the piano and composing", "Writing books, articles, and stories", "Marriage and family counseling"],
+      ans: 2,
+      exp: "Vita is a writer who always engages herself in writing books, articles, stories, etc."
+    },
+    {
+      id: 10,
+      q: "What is the name of the group of seven who always sing and pray together?",
+      opts: ["The Holy Seven", "The Gospel Choir", "The Prayer Warriors", "The Septet"],
+      ans: 3,
+      exp: "Vincenzo states: 'We are Septet. Seven of us always sing and pray together.'"
+    },
+    {
+      id: 11,
+      q: "At what age did Hadassah and Vita both begin piano lessons?",
+      opts: ["At age 5", "At age 9", "At age 10", "At age 7"],
+      ans: 3,
+      exp: "Both Hadassah and Vita started piano lessons at the age of 7 and are very good at it."
+    },
+    {
+      id: 12,
+      q: "Why was Vincenzo's hair never cut throughout his life?",
+      opts: ["He personally vowed never to cut it as a sign of consecration", "God directly instructed him through a dream never to cut it", "His grandfather Renan told his mom not to cut it — it was the visible symbol of God's commitment to him", "It was a tradition in his grandfather's ministry"],
+      ans: 2,
+      exp: "Mom said: 'Your father, prophet Renan, told me before he died not to cut your hair. Your hair is the visible symbol of the commitment God made to you.'"
+    },
+    {
+      id: 13,
+      q: "In the novel, who does 'Senior Dad' refer to in Vincenzo's inner conversations?",
+      opts: ["Vincenzo's biological father", "Papa Noah", "Prophet Renan (his grandfather)", "The Holy Spirit"],
+      ans: 3,
+      exp: "Throughout the story, 'Senior Dad' is the divine voice Vincenzo hears internally giving him instructions — representing the Holy Spirit."
+    },
+    {
+      id: 14,
+      q: "What city is Vincenzo's family home located in?",
+      opts: ["Los Angeles, CA", "Atlanta, GA", "Chicago, IL", "Dallas, TX"],
+      ans: 3,
+      exp: "Vincenzo and his family are clearly based in Dallas, TX, USA."
+    },
+    {
+      id: 15,
+      q: "Which country did Vincenzo visit for his very first ministration trip to Africa?",
+      opts: ["Ghana", "Kenya", "South Africa", "Nigeria"],
+      ans: 3,
+      exp: "Vincenzo says: 'This will be my first trip to Africa. Mhizlove_writes' country to be precise — the capital of Nigeria.'"
+    },
+    {
+      id: 16,
+      q: "According to Vincenzo's mother, what gives Black Africans a reputation for exceptional kindness toward strangers?",
+      opts: ["Their naturally peaceful character and generous spirit", "Their government's cultural programs promoting hospitality", "Their cultural upbringing to be courteous plus their deep religious faith — a double dose of niceness", "Their long history of trade and interaction with outsiders"],
+      ans: 2,
+      exp: "Dr. Jewel says: 'If you couple that cultural upbringing with the fact that most Africans are very religious, they get a double dose of niceness from their culture and their religion.'"
+    },
+    {
+      id: 17,
+      q: "How many mansions does Vincenzo own?",
+      opts: ["Five mansions", "Seven mansions", "More than ten mansions", "Three mansions"],
+      ans: 2,
+      exp: "The story states: 'I had more than ten mansions but Papa Noah insisted I remain staying in my parents' house.'"
+    },
+    {
+      id: 18,
+      q: "What musical instruments did Vincenzo learn, and in what order?",
+      opts: ["Piano and guitar at an early age, then violin later", "Guitar and violin at an early age, then drums much later", "Drums first, then guitar and violin", "Violin only — he was self-taught on other instruments"],
+      ans: 1,
+      exp: "Vincenzo says: 'I learned to play the guitar and the violin at an early age. Much later, I learned to play the drums.'"
+    },
+    {
+      id: 19,
+      q: "Which Psalm did Oreofe recite while being held captive in the African forest?",
+      opts: ["Psalm 23", "Psalm 91", "Psalm 70", "Psalm 46"],
+      ans: 2,
+      exp: "Oreofe recited Psalm 70: 'Hasten, O God, to save me; O LORD, come quickly to help me.'"
+    },
+    {
+      id: 20,
+      q: "How old is Oreofe when her captivity story begins in the forest?",
+      opts: ["19 years old", "21 years old", "25 years old", "23 years old"],
+      ans: 3,
+      exp: "Oreofe states: 'I am Oreofe, 23 years old.'"
+    },
+    {
+      id: 21,
+      q: "How long had Oreofe been held captive by the terrorist group?",
+      opts: ["Two years", "Three years", "Five years", "Four years"],
+      ans: 3,
+      exp: "Oreofe was kidnapped four years ago while coming from a vigil with her parents."
+    },
+    {
+      id: 22,
+      q: "How did Oreofe's parents lose their lives in captivity?",
+      opts: ["Shot during a midnight vigil by random attackers", "They died of illness shortly after capture", "They were poor and could not pay the ransom, so the terrorists killed them", "They were killed while trying to escape from captivity"],
+      ans: 2,
+      exp: "A ransom was demanded, but since Oreofe's parents were poor, the kidnappers killed them and kept Oreofe captive."
+    },
+    {
+      id: 23,
+      q: "What were Oreofe and her parents doing when they were kidnapped?",
+      opts: ["Going to Sunday morning church service", "Walking home from a prayer meeting in the afternoon", "Coming from a vigil around midnight", "Returning from a church camp"],
+      ans: 2,
+      exp: "Oreofe states: 'Coming from a vigil with my parents four years ago around midnight when we got kidnapped.'"
+    },
+    {
+      id: 24,
+      q: "How did Vincenzo handle the venomous snake wrapped around Oreofe's ankle?",
+      opts: ["He prayed and the snake fled on its own", "He used a large stick to kill the snake safely", "Samuel killed the snake while Vincenzo prayed over Oreofe", "He grabbed the snake with his bare hands and smashed it against the ground repeatedly"],
+      ans: 3,
+      exp: "He grabbed the venomous snake and smashed it against the ground several times — with his bare hands, no weapon."
+    },
+    {
+      id: 25,
+      q: "What exact words did Vincenzo speak to bring Oreofe back to life in the forest?",
+      opts: ['"Rise in Jesus name — live and not die, the works of God shall be declared"', '"Gracia! Hear the voice of the Lord, regain life, consciousness, and strength. I give you a new energy. Rise from the dead."', '"By the power of God the Father, come back to life in Jesus name, Amen."', '"Father God, restore this girl to life as you restored Lazarus from the tomb."'],
+      ans: 1,
+      exp: "Vincenzo said: 'Gracia! Hear the voice of the Lord, regain life, consciousness, and strength. I give you a new energy. Rise from the dead.'"
+    },
+    {
+      id: 26,
+      q: "What were Oreofe's very first words when she regained consciousness?",
+      opts: ['"Where am I? What happened to me?"', '"I cannot believe that I am alive"', '"Thank you for saving my life, sir"', '"Are you the angels sent to take me to God?"'],
+      ans: 3,
+      exp: "Oreofe's first words upon waking were: 'Are you the angels sent to take me to God?'"
+    },
+    {
+      id: 27,
+      q: "What name did Vincenzo call Oreofe when he raised her from the dead?",
+      opts: ["Oreofe", "Adonia", "Grace", "Gracia"],
+      ans: 3,
+      exp: "Vincenzo called her 'Gracia' — which became the name he used for her throughout the story."
+    },
+    {
+      id: 28,
+      q: "At what age did the Holy Spirit begin training Vincenzo to raise the dead?",
+      opts: ["At age three", "At age ten", "At age seven", "At age five"],
+      ans: 3,
+      exp: "'Holy spirit started training me at age five. He told me: Raising the dead is simple.'"
+    },
+    {
+      id: 29,
+      q: "Who was the first person Vincenzo ever raised from the dead?",
+      opts: ["Hadassah", "Norabel", "Oreofe", "Mylah"],
+      ans: 3,
+      exp: "Samuel references 'how you raised Mylah from the dead when you were 5 years old.'"
+    },
+    {
+      id: 30,
+      q: "Which Bible verse did Vincenzo quote to Samuel when explaining the authority to raise the dead?",
+      opts: ["John 14:12", "1 Corinthians 15:52", "Acts 10:38", "Romans 8:11"],
+      ans: 3,
+      exp: "Vincenzo quoted Romans 8:11: 'And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies.'"
+    },
+    {
+      id: 31,
+      q: "Who was waiting at the hotel, worried sick, when Vincenzo and Samuel returned from the forest?",
+      opts: ["Only Samuel's ministry team and some deacons", "Papa Noah and the entire ministry board", "Pastor Benson, his wife, Dassah, Mylah, Norabel, Vita, and Casper", "Only Dassah and Casper"],
+      ans: 2,
+      exp: "They met Pastor Benson and his wife at the hotel. Dassah shouted and hugged Vincenzo, and Mylah, Norabel, and Vita were also crying."
+    },
+    {
+      id: 32,
+      q: "How did Vincenzo and Oreofe pass through airport security with no passport or boarding pass for Oreofe?",
+      opts: ["Pastor Benson arranged emergency travel documents", "Samuel used his diplomatic connections", "Vincenzo quietly paid the security officers", "God performed a miracle and they were waved through without being checked"],
+      ans: 3,
+      exp: "They were 'mysteriously waved through the airport checkpoint' — 'given approval immediately and without checking.'"
+    },
+    {
+      id: 33,
+      q: "What was Oreofe's terrifying reaction when the plane first soared into the air?",
+      opts: ["She clutched her bible and prayed silently with tears", "She fainted from fear and had to be revived", "She screamed at the top of her voice", "She shook violently and begged to be taken off the plane"],
+      ans: 2,
+      exp: "Immediately the jet plane soared away, she screamed at the top of her voice. Dassah hissed, and Vita guessed she was a first-time flyer."
+    },
+    {
+      id: 34,
+      q: "What two cars did Vincenzo have waiting at Dallas airport when the group returned from Africa?",
+      opts: ["Two Mercedes Benz vehicles", "His red sports car and a Toyota SUV", "His red sports car and his Mercedes Benz", "A Mercedes Benz and a luxury van"],
+      ans: 2,
+      exp: "Samuel, Casper, Mylah and Norabel entered the red sports car while Dassah, Vita, Gracia and Vincenzo settled into the Mercedes Benz."
+    },
+    {
+      id: 35,
+      q: "What profession did Oreofe aspire to in life?",
+      opts: ["A gospel singer and worship leader", "A nurse or medical practitioner", "A teacher or university lecturer", "A marriage and family therapist"],
+      ans: 3,
+      exp: "Oreofe told Vincenzo she liked his mother's profession and confirmed she wanted to be a marriage and family therapist."
+    },
+    {
+      id: 36,
+      q: "Who did Vincenzo assign to mentor Oreofe both spiritually and professionally?",
+      opts: ["Papa Noah", "Hadassah", "Vita", "Dr. Jewel"],
+      ans: 3,
+      exp: "Vincenzo said: 'I will enroll you in Dr. Jewel's mentorship programme since she runs a formal mentorship programme for aspiring marriage counselors.'"
+    },
+    {
+      id: 37,
+      q: "What was Oreofe's highest level of education before being kidnapped?",
+      opts: ["She had only completed primary school", "She had completed elementary school", "She had already started university", "She had completed secondary school (High School)"],
+      ans: 3,
+      exp: "'I have completed secondary school before I was kidnapped.' Hadassah clarified: 'She meant High School.'"
+    },
+    {
+      id: 38,
+      q: "What name did Vincenzo call Oreofe when he read her mind while she admired him?",
+      opts: ["Gracia", "Beautiful", "Lovely", "Adonia"],
+      ans: 3,
+      exp: "'Adonia, you're lusting on another man's future husband.' Oreofe smiled, wondering if Adonia meant she was beautiful."
+    },
+    {
+      id: 39,
+      q: "What specific gift did Vincenzo give to Oreofe?",
+      opts: ["New clothes and a Bible", "A Bible and some spending money", "A laptop and study materials", "A new phone with the Bible"],
+      ans: 3,
+      exp: "She screamed with excitement when he gave her the new phone with the Bible."
+    },
+    {
+      id: 40,
+      q: "What key warning did Vincenzo attach to the gift he gave Oreofe?",
+      opts: ["To keep it private and not show it off", "To always use it only for emergencies", "Not to let it become an idol replacing God — only God should provide direction for her life", "Never to use it at night to protect her prayer time"],
+      ans: 2,
+      exp: "Vincenzo warned: 'The phone can become an idol... Your phone may be your GPS but it cannot and should not provide direction for your life... God is jealous for your time and your heart.'"
+    },
+    {
+      id: 41,
+      q: "How old is Papa Noah as mentioned in the story?",
+      opts: ["75 years old", "70 years old", "85 years old", "80 years old"],
+      ans: 3,
+      exp: "Papa Noah is described as an '80-year-old man.'"
+    },
+    {
+      id: 42,
+      q: "What was the relationship between Papa Noah and Vincenzo's grandfather Renan?",
+      opts: ["They were brothers who served God together", "They had been pastor and loyal member for decades", "Papa Noah had been Renan's student in ministry", "Papa Noah was Renan's friend"],
+      ans: 3,
+      exp: "Papa Noah is described as 'my grandad's friend. An 80-year-old man.'"
+    },
+    {
+      id: 43,
+      q: "What did Prophet Renan specifically charge Papa Noah with before dying?",
+      opts: ["To financially provide for Vincenzo's ministry", "To cover Vincenzo with prayer throughout his life", "To watch over Vincenzo and ensure he was faithful in seeking God to the end", "To train Vincenzo in the prophetic gifting"],
+      ans: 2,
+      exp: "'Renan told me before he died to watch over you and to see to it that you're faithful in seeking God to the end.'"
+    },
+    {
+      id: 44,
+      q: "Why exactly did Hadassah reject Casper's marriage proposal?",
+      opts: ["She was grieving and not ready for marriage", "Both because she didn't want to betray Vita who loved Casper, and because she had someone else in mind", "She felt God had not confirmed Casper as her spouse", "She was too devoted to her music ministry"],
+      ans: 1,
+      exp: "'Vita has made her intentions known to me that she loves him and I don't want to betray or hurt her.' She also admitted having 'someone else in mind.'"
+    },
+    {
+      id: 45,
+      q: "Who had overheard Casper's conversation with Dassah, and was found crying as a result?",
+      opts: ["Norabel", "Mylah", "Gracia (Oreofe)", "Vita"],
+      ans: 3,
+      exp: "Vita had overheard Casper's conversation with Dassah earlier — she was genuinely in love with Casper."
+    },
+    {
+      id: 46,
+      q: "What was Hadassah's role in the ministry compared to a biblical figure, according to Senior Dad?",
+      opts: ["Like Mary Magdalene — bringing deep devotion before Jesus", "Like the Levites — maintaining the atmosphere of God's presence", "Like Deborah — leading God's people into victory", "Like John the Baptist — drawing people to salvation and setting hearts on fire before Vincenzo mounts the pulpit"],
+      ans: 3,
+      exp: "'Hadassah's role is to draw people to salvation and set people's hearts on fire to receive the miracle that would happen when you mount the pulpit. She's clearing the way.'"
+    },
+    {
+      id: 47,
+      q: "How many young ladies came to Papa Noah's office claiming God told them to marry Vincenzo?",
+      opts: ["Seven young ladies", "Twelve young ladies", "Ten young ladies", "Five young ladies"],
+      ans: 2,
+      exp: "'Ten young ladies came to my office last week... Five of them know they are pursuing the same goal, which is you.'"
+    },
+    {
+      id: 48,
+      q: "What did Mylah say to Vincenzo in grief after he rejected her request for a relationship?",
+      opts: ['"Why did you bring my younger self back to life? You should have let me die and rest in peace."', '"I thought God told me we were meant to be together."', '"You are the only man I will ever love."', '"I sacrificed everything for this ministry. You owe me this."'],
+      ans: 0,
+      exp: "'Vinnie why did you bring my younger self back to life. You should have allowed me to die and rest in peace...'"
+    },
+    {
+      id: 49,
+      q: "What instruction did 'Senior Dad' give Vincenzo when Mylah asked for a relationship?",
+      opts: ['"Vincere! Pray for her and redirect her focus to God"', '"Vincere! Tell her NO."', '"Vincere! She is not the one — be gentle but firm"', '"Vincere! Ask her to seek My face for three days"'],
+      ans: 1,
+      exp: "'Vincere! Tell her NO.' — Senior Dad said it plainly. Vincenzo thought it was harsh, but he obeyed."
+    },
+    {
+      id: 50,
+      q: "What miraculous phenomenon occurred when Vincenzo mounted the Africa pulpit without even opening his mouth?",
+      opts: ["A divine fire appeared above the congregation", "A fragrant, holy aroma filled the auditorium", "The place was shaken like an earthquake and all were filled with the Holy Spirit", "An audible voice from heaven spoke to the congregation"],
+      ans: 2,
+      exp: "'He never opened his mouth but the place was shaken. And they were all filled with the Holy Spirit. God answered my prayers in a miraculous earthquake.'"
+    },
+    {
+      id: 51,
+      q: "What does 'Zoe' mean according to Vincenzo's preaching about divine health?",
+      opts: ["The healing power of Christ", "God's kind of life", "Eternal salvation and redemption", "The breath of the Holy Spirit"],
+      ans: 1,
+      exp: "'The Zoe lives inside a child of God. Zoe means God's kind of life.'"
+    },
+    {
+      id: 52,
+      q: "Which scripture did Vincenzo specifically quote during his divine health message?",
+      opts: ["Isaiah 53:5", "Matthew 8:17", "Psalm 103:3", "3 John 1:2"],
+      ans: 3,
+      exp: "He quoted 3 John 1:2: 'Dear friend, I pray that you may prosper in every way and be in good health physically just as you are spiritually.'"
+    },
+    {
+      id: 53,
+      q: "According to Vincenzo, what is the 'ultimate plan of God'?",
+      opts: ["Salvation of all mankind through Jesus Christ", "Filling the earth with His glory through anointed vessels", "Not divine healing but divine health — the believer's birthright in Christ", "That every knee should bow and every tongue confess"],
+      ans: 2,
+      exp: "'The ultimate plan of God is not divine healing but divine health. Divine health is your birthright in Christ Jesus.'"
+    },
+    {
+      id: 54,
+      q: "What did Vincenzo pray just before mounting the Africa crusade pulpit?",
+      opts: ["That God would give him the exact words to preach", "That God would search him, remove hindrances, grant boldness, and do miracles through Jesus name", "That every demon would be bound and cast out", "That hearts of the people would be softened to receive salvation"],
+      ans: 1,
+      exp: "He prayed: 'Search me and remove everything that will hinder your power... grant me boldness... stretch forth your hands through my hands to heal the sick... miracles, signs and wonders.'"
+    },
+    {
+      id: 55,
+      q: "Where is Vincenzo's personal music recording studio?",
+      opts: ["A professional studio in downtown Dallas", "In a private music building near the church", "In the basement of his parents' home", "At Papa Noah's ministry center"],
+      ans: 2,
+      exp: "He had built himself a music studio with special equipment in the basement where his music recordings are made."
+    },
+    {
+      id: 56,
+      q: "How is Hadassah described in relation to her passion for music?",
+      opts: ["A gifted worshipper consumed by the Holy Spirit", "A melomaniac who loves music to the point of obsession", "A dedicated singer who prays through music", "An anointed psalmist sent by God"],
+      ans: 1,
+      exp: "She is a melomaniac who loves music to the point of obsession."
+    },
+    {
+      id: 57,
+      q: "What was the name of the Nigerian pastor who hosted Vincenzo and his team?",
+      opts: ["Pastor Samuel", "Pastor Emmanuel", "Pastor Noah", "Pastor Benson"],
+      ans: 3,
+      exp: "They met 'Pastor Benson and his wife at the hotel.'"
+    },
+    {
+      id: 58,
+      q: "What occasion were Vincenzo's parents celebrating just before the Africa trip?",
+      opts: ["Their thirtieth year anniversary in ministry", "Their baptism anniversary", "Their wedding anniversary and honeymoon trip", "Vincenzo's birthday celebration"],
+      ans: 2,
+      exp: "The happy pair were celebrating their wedding anniversary and leaving for their honeymoon."
+    },
+    {
+      id: 59,
+      q: "Which city did Dr. Jewel suggest as a good honeymoon destination?",
+      opts: ["Rome, Italy", "London, England", "Santorini, Greece", "Paris, France"],
+      ans: 3,
+      exp: "Dr. Jewel replied with Paris: 'the French capital, Paris, is often dubbed the City of Love, and it's one of the top honeymoon destinations in the world.'"
+    },
+    {
+      id: 60,
+      q: "Which Philippians passage did Papa Noah quote to help Vincenzo control his thoughts about Hadassah?",
+      opts: ["Philippians 4:4-5", "Philippians 2:5", "Philippians 4:13", "Philippians 4:6-8"],
+      ans: 3,
+      exp: "Papa Noah quoted Philippians 4:6-8: 'Do not be anxious about anything... think about such things.'"
+    },
+    {
+      id: 61,
+      q: "What dream did Oreofe have while Vincenzo was on his one-week trip to Australia?",
+      opts: ["She dreamed Vincenzo was preaching to millions and needed prayer covering", "She dreamed Vincenzo was trapped in a foreign country", "She dreamed of a plane crash with Vincenzo as the victim, waking up shouting his name", "She dreamed Vincenzo was gravely ill"],
+      ans: 2,
+      exp: "In her dream, a plane was heading straight at her and 'just as the plane is about to crash I see myself shouting Vinnie!!!'"
+    },
+    {
+      id: 62,
+      q: "What shocking news coincidence followed Oreofe's plane crash dream?",
+      opts: ["News reported Vincenzo's private jet was grounded", "Breaking news reported a plane crash that killed three people near the 3M Plant", "A weather report warned of severe storms along his route", "News reported a terrorist attack in the city he was visiting"],
+      ans: 1,
+      exp: "She heard on TV: 'Plane Crash Latest News. Police have confirmed a plane crashed and killed three people near the 3M Plant.'"
+    },
+    {
+      id: 63,
+      q: "How did Oreofe discover that Vincenzo was safe after her dream and the news report?",
+      opts: ["Dr. Jewel called her with reassuring news", "Papa Noah prayed with her and gave a word of comfort", "Vita prayed with her and calmed her fears", "Hadassah showed his face on her phone, then Vincenzo called Oreofe directly"],
+      ans: 3,
+      exp: "Hadassah stretched out her phone and Vincenzo's smiling face lit up the screen. Then he called Oreofe on her phone."
+    },
+    {
+      id: 64,
+      q: "For approximately how long did Oreofe pray fervently for Vincenzo while he was away?",
+      opts: ["Thirty minutes", "One hour", "Three hours", "Nearly two hours"],
+      ans: 3,
+      exp: "'I prayed fervently for him for nearly two hours.'"
+    },
+    {
+      id: 65,
+      q: "Where was Vincenzo traveling for his one-week trip that followed the Africa crusade?",
+      opts: ["United Kingdom", "Canada", "Asia", "Australia"],
+      ans: 3,
+      exp: "He was advised by his Rav to rest for two days before going for his one-week trip to Australia."
+    },
+    {
+      id: 66,
+      q: "How many days did Oreofe go without reading her Bible before Vincenzo rebuked her?",
+      opts: ["One day", "Two days", "Three days", "Four days"],
+      ans: 1,
+      exp: "Vincenzo rebuked Oreofe for not reading her Bible in two days — comparing her to the children of Israel who forgot God's deliverance."
+    },
+    {
+      id: 67,
+      q: "What did Vincenzo say about airplanes in dreams when comforting Oreofe?",
+      opts: ["That it is a divine warning to pray against danger", "That such dreams are always demonic attacks meant to produce fear", "That dreaming of a plane crash involving loved ones symbolizes fear of losing them, not a guarantee it will happen", "That it is a call to intensify prayer coverage for the ministry"],
+      ans: 2,
+      exp: "'Dreaming about a plane crash involving your loved ones symbolises your fear of losing them... it does not guarantee that I will be involved in a plane crash in real life.'"
+    },
+    {
+      id: 68,
+      q: "What concern did Papa Noah express about Vincenzo finding a life partner?",
+      opts: ["That Vincenzo was too devoted to ministry and might stay single forever", "That women pursued him for wrong reasons — his anointing not his character", "That Vincenzo's fear of marrying someone he doesn't love was understandable, but God wants the best he loves for him", "That Vincenzo's hair was a stumbling block to women approaching him"],
+      ans: 2,
+      exp: "Papa Noah answered: 'I do not believe that God would call you to marry someone you do not love... God wants the BEST YOU LOVE FOR YOU.'"
+    },
+    {
+      id: 69,
+      q: "What did Senior Dad warn Vincenzo about regarding his behavior toward Hadassah?",
+      opts: ["That Vincenzo prays for Hadassah more than for his own ministry", "That Vincenzo had told Hadassah about his feelings, crossing a boundary", "That Vincenzo goes the extra miles for her, does things he hates for her, and she has now fallen in love with him", "That Vincenzo spends too much of his ministry money on Hadassah's projects"],
+      ans: 2,
+      exp: "'Vincere, you go the extra miles for Hadassah. You make time for her even if you're busy, you even do the things you hate for her. And now she's in love with him.'"
+    },
+    {
+      id: 70,
+      q: "What was Oreofe's first reaction upon seeing Vincenzo's heavily-fortified Dallas mansion?",
+      opts: ["She prayed quietly and thanked God for the blessing", "She asked many questions about how a prophet could own such wealth", "She shook her head with huge eyes and her mouth wide open, her mind carried away in amazement", "She stood still and began to weep tears of gratitude"],
+      ans: 2,
+      exp: "Gracia looked up, shaking her head, staring at the heavily-fortified mansion with huge eyes, her mouth wide open. 'Her mind was already carried away.'"
+    },
+    {
+      id: 71,
+      q: "How did Dr. Jewel greet Oreofe when they first met at the Dallas home?",
+      opts: ["She shook her hand formally and began asking background questions", "She prayed for Oreofe before speaking a word to her", "She asked why Oreofe was kneeling, then moved closer and held her close in a warm embrace", "She studied Oreofe quietly from a distance before speaking"],
+      ans: 2,
+      exp: "Dr. Jewel asked why she was on her knees. 'She moved closer to me and held me close. She smelled so good, I didn't want to leave the comfort of her arms.'"
+    },
+    {
+      id: 72,
+      q: "What remarkable resemblance did Oreofe notice between Vincenzo and his father?",
+      opts: ["They wore the same clothes and carried themselves with the same dignity", "They had the same piercing spiritual eyes that could read people's thoughts", "Vincenzo's dad is a carbon copy of his son — an exact duplicate of him", "They both had the same long hair and spoke with the same voice"],
+      ans: 2,
+      exp: "'It suddenly dawned on me that he's Vinnie's dad. He is a carbon copy of his dad, an exact duplicate of him.'"
+    },
+    {
+      id: 73,
+      q: "How does Vincenzo describe his parents' relationship to each other?",
+      opts: ["They are a model of sacrifice and service in ministry together", "They are inseparable, always near each other, impossible to find apart — almost as though they are one being", "They are best friends first and a married couple second", "They are deeply devoted to God and that devotion bonds them together"],
+      ans: 1,
+      exp: "'Mom and Dad are inseparable. They are always near each other and impossible to find apart, almost as though they are one being.'"
+    },
+    {
+      id: 74,
+      q: "How did Vincenzo respond when Oreofe called herself 'useless' in the music studio?",
+      opts: ["He encouraged her that God had hidden gifts in her waiting to be discovered", "He told her that music is not everyone's calling", "He rebuked the word firmly: no one is useless, every person serves a purpose, life would be boring if all did the same thing", "He asked Hadassah to teach Oreofe piano basics to build her confidence"],
+      ans: 2,
+      exp: "'No one is useless in this world... Every one of us serves a purpose... Can you imagine what the world would be like if we all do the same thing?'"
+    },
+    {
+      id: 75,
+      q: "What did Pastor Benson explain about why Nigerian women kneel to greet elders?",
+      opts: ["It is a universal African tradition passed down through every generation", "Several things go into it — ethnic background and gender determine the exact form, as a sign of respect and deference for elders", "It is purely a religious practice borrowed from Islamic culture", "It was originally a royal court custom that spread through the church community"],
+      ans: 1,
+      exp: "Pastor Benson explained: 'Several things go into greeting an elder in Nigeria, including ethnic background and gender... a sign of respect and deference for the elders.'"
+    },
+    {
+      id: 76,
+      q: "What one-week deadline did Vincenzo give Dassah after she rejected Casper's proposal?",
+      opts: ["To fast for seven days and wait for God's answer", "One week to seek God's face to discover His will and who He is guiding her to as a future spouse", "To speak with Papa Noah before making any decision", "To pray with Vita and reconcile their relationship before thinking of marriage"],
+      ans: 1,
+      exp: "'I'll give you one week to seek God's face to discover His Will for you and to guide you to your future spouse.'"
+    },
+    {
+      id: 77,
+      q: "What 1 Corinthians 13 verse did Vincenzo quote to his dad in defense of his love for his mother?",
+      opts: ['"Love is unconditional and it never loses, never gives up, and endures through all things"', '"Love is patient and kind, love is not jealous or boastful, it is not arrogant or rude"', '"Love is a choice we make every day — not just a feeling but a commitment"', '"Love is the greatest commandment — to love God and love one another"'],
+      ans: 1,
+      exp: "Vincenzo quoted 1 Corinthians 13: 'love is patient and kind, love is not jealous or boastful, it is not arrogant or rude.'"
+    },
+    {
+      id: 78,
+      q: "How did the man in captivity who secretly protected Oreofe differ from the other kidnappers?",
+      opts: ["He was the only one who brought her food and never slept with her", "He was their leader and gave strict orders that she not be harmed", "He was secretly a Christian forced into the group", "He was a medical doctor assigned to keep her alive"],
+      ans: 0,
+      exp: "'This particular person had never slept with me before but he was always there, watching when others were sexually molesting me.' He also brought her food."
+    },
+    {
+      id: 79,
+      q: "What chilling words did the silent man in captivity say to Oreofe that robbed her of her appetite?",
+      opts: ['"You will never leave this forest alive"', '"God cannot hear you in this forest"', '"You have only few days left to live"', '"We are moving you to another location — this is your last night here"'],
+      ans: 2,
+      exp: "'You have only few days left to live.' — He said this and walked away. 'The hunger impulse disappeared completely.'"
+    },
+    {
+      id: 80,
+      q: "What is Vincenzo's full prophetic name as mentioned in Oreofe's prayer for him?",
+      opts: ["Vincenzo Renan", "Vincenzo Nayel", "Vincenzo Adeleke", "Vincenzo Noah"],
+      ans: 1,
+      exp: "Oreofe prayed: 'Prophet Vincenzo Nayel, May you be anointed with fresh oil today...'"
+    },
+    {
+      id: 81,
+      q: "Who accompanied Vincenzo into the forest when they found Oreofe?",
+      opts: ["Casper", "Norabel", "Vita", "Samuel"],
+      ans: 3,
+      exp: "Samuel and Vincenzo both went into the forest together. 'Samuel and I both started to get weird and tired after about thirty minutes.'"
+    },
+    {
+      id: 82,
+      q: "What did Vincenzo's grandad give him in a dream, according to Oreofe's reading of 'Turning Point'?",
+      opts: ["A golden staff and a prophetic mantle", "A scroll of prophecies for the nations", "His brain and his crown", "A holy anointing oil and a prayer shawl"],
+      ans: 2,
+      exp: "Oreofe remembered reading in 'Turning Point' that Vincenzo's grandad gave him his brain and his crown in the dream, and since then he can read people's minds."
+    },
+    {
+      id: 83,
+      q: "What Psalm did Oreofe open to read after the man brought her food and left?",
+      opts: ["Psalm 23", "Psalm 9", "Psalm 91", "Psalm 46"],
+      ans: 1,
+      exp: "She opened to Psalm 9: 'The Lord also will be a refuge for the oppressed, A refuge in times of trouble.'"
+    },
+    {
+      id: 84,
+      q: "What song did Vincenzo sing as the dying man he met in the forest drew his last breath?",
+      opts: ['"It is well with my soul"', '"Create in us a clean heart, oh God"', '"Great is Thy faithfulness"', '"I surrender all to You, Lord"'],
+      ans: 1,
+      exp: "Then Vincenzo began to sing: 'Create in us a clean heart, oh God / And renew a right spirit within us...'"
+    },
+    {
+      id: 85,
+      q: "What was Oreofe's physical appearance when Vincenzo first placed her in the car?",
+      opts: ["She appeared peaceful, as if sleeping", "Her clothes were ragged, bruises fresh and unhealed, hair a tangled mess — like a mad woman", "She was sitting upright but completely unresponsive", "She had a severe fever and was shaking violently"],
+      ans: 1,
+      exp: "'Her clothes were ragged, old and torn in many places and off her shoulder. The bruises and cuts were still fresh. Her hair was a tangled mess, she was like a mad woman.'"
+    },
+    {
+      id: 86,
+      q: "What did Papa Noah say about the purpose of God's instructions?",
+      opts: ['"God\'s instructions are difficult but always rewarding"', '"When God gives an instruction, it is to bless and uplift us. Our obedience benefits us, not God."', '"Following God\'s instructions requires great sacrifice"', '"God\'s instructions protect us from the enemy"'],
+      ans: 1,
+      exp: "'When God gives an instruction, it is to bless and uplift us. Our obedience does not benefit God... Our obedience to God's instructions benefits us.'"
+    },
+    {
+      id: 87,
+      q: "What is the name of the backstory book mentioned about Vincenzo's mother's experience?",
+      opts: ["The Anointed One", "Turning Point", "Prophet's Journey", "Called Before Birth"],
+      ans: 1,
+      exp: "'If you haven't read Turning Point, then you're missing out. Go and read about my mom's experience...'"
+    },
+    {
+      id: 88,
+      q: "What was the dying man in the forest's core confession that revealed his doubt about God?",
+      opts: ['"Does God truly exist?"', '"For me, unanswered prayers proved God\'s non-existence."', '"Why is there so much suffering in the world?"', '"Am I going to heaven?"'],
+      ans: 1,
+      exp: "The dying man said: 'For me unanswered prayers proved God's non-existence.' He also confessed he had killed eight people that day."
+    },
+    {
+      id: 89,
+      q: "What was Oreofe's declaration when her captor mocked her for praying?",
+      opts: ['"God never hates those He created — suffering is the refining fire that produces gold"', '"Not having what I prayed for does not prove God does not exist. This only proves God knows what is best and He doeth as He willeth."', '"God allows suffering so faith may grow stronger than circumstances"', '"The enemy brings suffering but God turns all things to good for those who love Him"'],
+      ans: 1,
+      exp: "Oreofe declared: 'Not having what I prayed for does not prove that God does not exist. This only prove that God knows what is best and He doeth as he willeth and pleaseth.'"
+    },
+    {
+      id: 90,
+      q: "What did Dassah reveal about the 'someone else in mind' she had when asked why she rejected Casper?",
+      opts: ["That she loved Samuel", "That she was waiting for Vincenzo, knowing they could never be together", "She said only that it was 'someone who is very dear to God' and scratched her hair, unsure how to fully answer", "That she had received a prophetic word that her husband was already known to her"],
+      ans: 2,
+      exp: "Dassah scratched her hair, unsure, and only replied: 'Someone who is very dear to God.'"
+    },
+    {
+      id: 91,
+      q: "What prophetic word did Papa Noah speak over Vincenzo during their meeting?",
+      opts: ['"Vincere! Your anointing will increase in this next season beyond what you have ever imagined"', '"Vincere! You are my Son, chosen and marked by my love, pride of my life. I want you to follow God\'s lead even when you are not sure of the outcome."', '"Vincere! The nations are waiting — arise and go to the ends of the earth"', '"Vincere! Guard your heart above all else — the enemy seeks to use what you love against you"'],
+      ans: 1,
+      exp: "Papa Noah said: 'Vincere! You are my Son, chosen and marked by my love, pride of my life. I want you to follow God's lead even when you are not sure of the outcome.'"
+    },
+    {
+      id: 92,
+      q: "What connection did Vincenzo's mom make about him and Hadassah that showed her perceptiveness?",
+      opts: ["That they were both secretly struggling with feelings for each other", "That they were highly compatible, complemented each other, and shared core beliefs and values about family, faith and purpose", "That Hadassah was more devoted to Vincenzo's ministry than to God Himself", "That they shared a unique musical bond that could only be God-ordained"],
+      ans: 1,
+      exp: "Dr. Jewel said: 'You and Hadassah are highly compatible, you complement each other... having similar values is one of the key factors in compatibility...'"
+    },
+    {
+      id: 93,
+      q: "What advice did Vincenzo give Casper after Dassah's rejection?",
+      opts: ["To fast and pray for 21 days, then approach her again", "Not to take rejection too seriously, align his interests with hers, and be patient — patience is the key to success", "To give Dassah space for at least six months before trying again", "To speak with Vincenzo first before approaching Dassah again"],
+      ans: 1,
+      exp: "'Do not take the rejection too seriously... Align your interest with her interests when you approach her again... be patient. It is rightly said, Patience is the key to success.'"
+    },
+    {
+      id: 94,
+      q: "How did Vincenzo respond when Oreofe kept kneeling before him?",
+      opts: ['"Stand up — God is the one to receive your reverence, not His servants"', '"Its fine. I respect your culture where elders and men of God are revered but this is Dallas. Call me Vinnie."', '"In God\'s kingdom, we are all equal — no one bows before another"', '"Rise up — kneeling is for prayer, not for greeting men of God"'],
+      ans: 1,
+      exp: "'Its fine. I respect your culture where elders and men of God are revered but this is Dallas. Call me Vinnie, Okay?'"
+    },
+    {
+      id: 95,
+      q: "What was Vincenzo's response when Oreofe asked him to be her personal mentor?",
+      opts: ["He agreed, saying her spiritual growth was his personal responsibility", "He said his schedule was too full for personal mentorship", "He shook his head in disapproval and assigned Dr. Jewel as her mentor instead", "He asked her to prove her dedication first through six months of Bible study"],
+      ans: 2,
+      exp: "'Can you be my mentor?' He shook his head in disapproval. 'Dr Jewel will be your mentor both spiritually and professionally.'"
+    },
+    {
+      id: 96,
+      q: "What warning did Senior Dad give about the potential consequences if Vincenzo didn't deal with his feelings for Hadassah?",
+      opts: ["That his anointing would gradually diminish", "That his adversary the devil would like nothing better than to destroy him, make a laughingstock of him, end his ministry, and hurt those dearest to him", "That he would mislead Hadassah and destroy her destiny", "That his authority as a prophet would be undermined by scandal"],
+      ans: 1,
+      exp: "'Your adversary the devil prowls about like a roaring lion... would like nothing better than to destroy you, make a laughingstock of you, end your ministry, and hurt those dearest to you.'"
+    },
+    {
+      id: 97,
+      q: "What scripture did Vincenzo quote to Dassah about controlling her spiritual choices?",
+      opts: ["Proverbs 3:5-6", "Jeremiah 29:11", "Philippians 4:6-8", "Romans 8:9"],
+      ans: 3,
+      exp: "Vincenzo quoted Romans 8:9: 'But you are not controlled by your sinful nature. You are controlled by the Spirit if you have the Spirit of God living in you.'"
+    },
+    {
+      id: 98,
+      q: "Where does Vincenzo have his music studio for recording?",
+      opts: ["A professional studio downtown", "A private building near the church", "The basement of his parents' home", "Papa Noah's ministry center"],
+      ans: 2,
+      exp: "He had built himself a music studio with special equipment in the basement where his music recordings are made."
+    },
+    {
+      id: 99,
+      q: "What did Dr. Jewel say about the city dubbed the 'City of Love'?",
+      opts: ["It has the most romantic restaurants in the world", "The romantic atmosphere it exudes is the perfect description anyone who visited would give", "Its beautiful architecture and art museums make it romantic", "Its history of famous love stories and poets make it so"],
+      ans: 1,
+      exp: "Dr. Jewel described Paris: 'the romantic atmosphere it exudes is the perfect description anyone who had the opportunity to visit would give.'"
+    },
+    {
+      id: 100,
+      q: "Vincenzo refers to his mother as what in private moments of affection?",
+      opts: ["Mom", "Professor Jewel", "My first love", "Dr. Nayel"],
+      ans: 2,
+      exp: "Vincenzo says 'She's my first love' when carrying her. 'I felt admiration for the first love of my life.'"
+    },
+    {
+      id: 101,
+      q: "What does Vincenzo do immediately every morning as part of his daily spiritual discipline?",
+      opts: ["He reads five chapters of the Bible before breakfast", "He spends at least an hour in worship before speaking to anyone", "He prays and speaks with Senior Dad before doing anything else", "He fasts until noon every day without exception"],
+      ans: 2,
+      exp: "Throughout the story, Vincenzo's first act each day is communing with Senior Dad (the Holy Spirit) before any other activity."
+    },
+    {
+      id: 102,
+      q: "When Oreofe was in the forest alone before being found, what kept her from giving up entirely?",
+      opts: ["The hope of returning to her village", "Her Bible and the Psalms she had memorized", "The memory of her parents' faith", "The belief that God would send someone to rescue her"],
+      ans: 1,
+      exp: "Oreofe's Bible and the scripture passages she clung to — particularly the Psalms — kept her faith alive through four years of captivity."
+    },
+    {
+      id: 103,
+      q: "What did Vincenzo tell Oreofe when she asked why God allowed her suffering for four years?",
+      opts: ["'God allows trials to mature and equip those He has chosen for greater purposes'", "'God did not abandon you — He was with you through every moment and is bringing redemption now'", "'Your suffering is a testimony that will shake nations and lead many to Christ'", "'God's ways are not our ways, and His timing is always perfect'"],
+      ans: 1,
+      exp: "Vincenzo assured Oreofe that God had not abandoned her — He was with her all along and was now bringing her redemption and purpose."
+    },
+    {
+      id: 104,
+      q: "What was the first meal or comfort Oreofe received after being rescued from the forest?",
+      opts: ["A full hot meal prepared by the hotel chef", "A bottle of water and some crackers found in the car", "Water and food Samuel had in the car when they drove her out of the forest", "Nothing until they arrived at the hotel"],
+      ans: 2,
+      exp: "Samuel had water and some food in the car which was given to Oreofe immediately as they drove away from the forest."
+    },
+    {
+      id: 105,
+      q: "How did Oreofe react when she was first handed fresh new clothes to wear in Dallas?",
+      opts: ["She cried tears of joy and thanked everyone repeatedly", "She stared at them quietly and held them tightly as though they might disappear", "She screamed with excitement and was overwhelmed with gratitude", "She was too weak and exhausted to show much emotion"],
+      ans: 2,
+      exp: "Oreofe was overwhelmed and overjoyed at receiving new clothes — after years in torn rags, it was an emotional moment of restoration."
+    },
+    {
+      id: 106,
+      q: "What does Vincenzo say is the reason Africans in the diaspora — outside Africa — are different from those still on the continent?",
+      opts: ["They lose their cultural identity by immersing in foreign cultures", "Their level of exposure to other cultures and foreign education changes them", "The hardship of immigration strips them of their natural warmth", "Foreign governments actively discourage cultural expression"],
+      ans: 1,
+      exp: "The story distinguishes Africans within Africa from those in the diaspora — noting exposure to foreign cultures and education changes them."
+    },
+    {
+      id: 107,
+      q: "What language did Oreofe speak that surprised those around her?",
+      opts: ["She spoke perfect French alongside English", "She spoke only Yoruba and had to be translated", "She spoke standard English, which surprised people given her background", "She spoke both English and her native dialect fluently"],
+      ans: 2,
+      exp: "Oreofe's ability to speak clear English surprised those around her, given she had spent four years in the forest as a captive."
+    },
+    {
+      id: 108,
+      q: "Who among the Septet is specifically mentioned as Vincenzo's closest male friend?",
+      opts: ["Casper", "Samuel", "Norabel", "A unnamed member"],
+      ans: 1,
+      exp: "Samuel is consistently portrayed as Vincenzo's most trusted male companion — he is the one who accompanies Vincenzo into the forest."
+    },
+    {
+      id: 109,
+      q: "What does Vincenzo say distinguishes a true prophet from a false one?",
+      opts: ["A true prophet only speaks what people want to hear", "A true prophet's words are always confirmed by the Holy Spirit and rooted in the Word of God", "A true prophet performs miracles as the primary proof of calling", "A true prophet is recognized only by other prophets"],
+      ans: 1,
+      exp: "Vincenzo's ministry is consistently defined by alignment with the Holy Spirit and Scripture — the two marks of prophetic authenticity he demonstrates."
+    },
+    {
+      id: 110,
+      q: "What did Vincenzo observe about how the Nigerian church congregation responded to anointed ministry differently from American congregations?",
+      opts: ["They were more reserved and formal in their responses", "They were more expressive, loud, and uninhibited in worship and response to the Spirit", "They required more intellectual preaching before responding emotionally", "They responded primarily to healing rather than preaching"],
+      ans: 1,
+      exp: "The Nigerian congregation's uninhibited, expressive response to the Spirit contrasted with what Vincenzo was accustomed to — they were loud, joyful, and fully surrendered."
+    },
+    {
+      id: 111,
+      q: "What specific role does Norabel play in the Septet?",
+      opts: ["Lead guitarist and backup vocalist", "Drummer and harmony singer", "Pianist supporting Hadassah's lead vocal", "Bass vocalist and prayer intercessor"],
+      ans: 1,
+      exp: "Norabel's specific role in the Septet involves drumming and supporting the harmonies in the group's worship sessions."
+    },
+    {
+      id: 112,
+      q: "What is the specific promise Vincenzo made to Oreofe about her educational future?",
+      opts: ["To pay all her university fees personally from his ministry funds", "To enroll her in the best university in Dallas", "To enroll her in Dr. Jewel's mentorship programme and ensure she gets her qualifications", "To have her home-schooled by the best tutors money could buy"],
+      ans: 2,
+      exp: "Vincenzo promised to enroll Oreofe in Dr. Jewel's mentorship programme for aspiring marriage counselors, ensuring her professional future."
+    },
+    {
+      id: 113,
+      q: "How did Vincenzo explain his ability to read people's minds to those who asked about it?",
+      opts: ["He said it was a natural gift he was born with, independent of his faith", "He said God opens his eyes to see what is in a person's heart — it is a spiritual gift, not a psychic power", "He said he learned it through years of studying human behavior and body language", "He never explained it and always deflected questions about this ability"],
+      ans: 1,
+      exp: "Vincenzo explains that reading minds is a spiritual gift — God opens his eyes to what is in a person's heart, separate from any natural ability."
+    },
+    {
+      id: 114,
+      q: "What does Vincenzo tell Oreofe is the most important habit she must build as a new believer in a stable environment?",
+      opts: ["Attending church every week without fail", "Building a consistent daily Bible reading habit", "Learning to fast twice per week as Jesus prescribed", "Finding a prayer partner to pray with every day"],
+      ans: 1,
+      exp: "Vincenzo specifically rebuked Oreofe for not reading her Bible — consistently emphasizing daily Scripture reading as the foundation of spiritual growth."
+    },
+    {
+      id: 115,
+      q: "What was Casper's full intention when he asked Vincenzo's opinion before approaching Hadassah?",
+      opts: ["He wanted Vincenzo to help him write a love letter", "He wanted Vincenzo's blessing and permission to propose to Hadassah, as Vincenzo is like her spiritual covering", "He wanted Vincenzo to tell him if God had confirmed Hadassah for him prophetically", "He simply wanted advice on how to approach her without making it awkward"],
+      ans: 1,
+      exp: "Casper asked Vincenzo's permission to propose to Dassah — acknowledging Vincenzo's spiritual authority over the Septet and over Dassah specifically."
+    },
+    {
+      id: 116,
+      q: "What was Vita's specific role in the Septet group?",
+      opts: ["Lead vocalist and pianist", "Writer and backup vocalist — her gift for words complemented the musical ministry", "Drummer and prayer leader", "Manager and organizer of the Septet's schedule"],
+      ans: 1,
+      exp: "Vita's writing gift naturally positioned her as the one who documents and creates content for the group — she also supports vocally."
+    },
+    {
+      id: 117,
+      q: "Where does the story indicate Vincenzo keeps and reads his Bible?",
+      opts: ["At his bedside, reading it first thing in the morning", "In his private prayer room that no one else enters", "Wherever he is — his Bible is always physically with him at all times", "Only in the car during travel, using the time to study"],
+      ans: 2,
+      exp: "Throughout the story, Vincenzo's Bible is always with him — it is part of his daily life and ministry identity at all times."
+    },
+    {
+      id: 118,
+      q: "What specific aspect of Vincenzo's personality makes the ten women most attracted to him beyond just his looks?",
+      opts: ["His extreme wealth and multiple mansions", "His combination of being unusually handsome, posh, intellectually exceptional, and carrying the Lord's anointing", "His ability to read minds and perform miracles", "His long flowing hair that sets him apart from all other men"],
+      ans: 1,
+      exp: "Papa Noah described what draws them: 'My son is too handsome and too posh, unusual, highly intellectual and the Lord's anointed.'"
+    },
+    {
+      id: 119,
+      q: "What did Vincenzo say when Oreofe asked him to explain the significance of the name 'Gracia'?",
+      opts: ["It is the Spanish word for grace — representing the grace of God that kept her alive in captivity", "It is an African name meaning beloved daughter of God", "It is a name the Holy Spirit gave him specifically for her, and she carries the grace of God on her life", "It was simply what came to his spirit when he called her back to life — he didn't know its meaning at first"],
+      ans: 0,
+      exp: "Vincenzo explained that Gracia is the Spanish word for grace — a powerful declaration that she survived by the grace of God alone."
+    },
+    {
+      id: 120,
+      q: "What is the full name of the terrorist group that held Oreofe captive?",
+      opts: ["Boko Haram", "The Forest Brotherhood", "The name is not specified in the story — they are referred to only as terrorists or kidnappers", "The Niger Delta Avengers"],
+      ans: 2,
+      exp: "The story does not give the terrorist group a specific name — they are referred to as the kidnappers or terrorist group throughout."
+    },
+    {
+      id: 121,
+      q: "What did Oreofe do the very first morning she woke up safely in Vincenzo's Dallas mansion?",
+      opts: ["She screamed in confusion, not knowing where she was", "She prayed and thanked God for her deliverance before anyone else woke up", "She explored the house quietly, marveling at everything she saw", "She immediately went looking for Vincenzo to thank him again"],
+      ans: 1,
+      exp: "Oreofe's first act each morning after rescue reflects the faith and gratitude she consistently demonstrates — prayer and thanksgiving to God."
+    },
+    {
+      id: 122,
+      q: "What was the exact scripture reference Papa Noah cited as the basis for obedience to God?",
+      opts: ["1 Samuel 15:22 — obedience is better than sacrifice", "Deuteronomy 31:8 — The Lord will personally go ahead of you", "Romans 8:9 — controlled by the Spirit, not the sinful nature", "James 4:7 — Submit to God, resist the devil"],
+      ans: 0,
+      exp: "Papa Noah drew from 1 Samuel 15:22's principle that obedience is better than sacrifice — emphasizing that God's instructions are for our benefit."
+    },
+    {
+      id: 123,
+      q: "What specific detail about Samuel's character is emphasized through his actions in the forest?",
+      opts: ["His bravery — he ran ahead of Vincenzo to face any danger first", "His unwavering loyalty — he followed Vincenzo into the unknown forest at midnight without hesitation", "His leadership — he organized the rescue operation efficiently", "His prayer life — he prayed aloud the entire time in the forest"],
+      ans: 1,
+      exp: "Samuel's defining characteristic shown in the forest sequence is his absolute loyalty to Vincenzo — following him into a dangerous unknown forest without question."
+    },
+    {
+      id: 124,
+      q: "How does Vincenzo handle pressure or heavy burdens between ministry assignments?",
+      opts: ["He goes on long drives alone to clear his head", "He isolates himself in his prayer room for days", "He talks with Senior Dad and processes things through prayer, sometimes leaning on Papa Noah", "He journals everything he feels to God"],
+      ans: 2,
+      exp: "Vincenzo consistently processes pressure through prayer and consultation with Senior Dad (Holy Spirit) and Papa Noah — his two spiritual anchors."
+    },
+    {
+      id: 125,
+      q: "What does Vincenzo say to Oreofe about the danger of idle time for someone in spiritual recovery?",
+      opts: ["Idle time leads to boredom which leads to depression", "An idle mind is the devil's workshop — she must always be intentionally occupied with God's word, prayer, or purposeful activity", "Too much rest can make a person lazy and spiritually dull", "She should always be around people to avoid falling into wrong thinking"],
+      ans: 1,
+      exp: "Vincenzo warns Oreofe that spiritual recovery requires intentional activity — idleness leaves the mind vulnerable to the enemy's attacks."
+    },
+    {
+      id: 126,
+      q: "What is the name Vincenzo's grandfather carried that established his prophetic legacy?",
+      opts: ["Prophet Noah", "Prophet Renan", "Prophet Casper", "Prophet Samuel"],
+      ans: 1,
+      exp: "Vincenzo's grandfather is referred to as Prophet Renan — a man of great spiritual stature whose legacy Vincenzo carries forward."
+    },
+    {
+      id: 127,
+      q: "Why does Vincenzo say he cannot be in a relationship the way other men can?",
+      opts: ["His vow of celibacy prohibits it until he turns 30", "His calling and anointing require a specific type of woman chosen by God — not just anyone he is attracted to", "His ministry schedule leaves no time for relationships", "Papa Noah has expressly forbidden him to date until he is spiritually ready"],
+      ans: 1,
+      exp: "Vincenzo's primary reason is that his extraordinary calling demands a specifically chosen partner — not merely attraction or personal preference."
+    },
+    {
+      id: 128,
+      q: "What does Oreofe say she felt the moment she first heard Vincenzo pray?",
+      opts: ["She felt the presence of God so strongly she could not stand", "She felt as though the words were not coming from a human being — as if God Himself was speaking", "She felt deeply convicted of her sin and began to weep", "She felt calm and peaceful for the first time in four years"],
+      ans: 1,
+      exp: "Hearing Vincenzo pray was unlike anything Oreofe had ever experienced — his prayers carried such anointing that they seemed to come from beyond the natural realm."
+    },
+    {
+      id: 129,
+      q: "How does Vincenzo describe the working relationship between him and Hadassah during ministry?",
+      opts: ["She warms up the crowd and he brings the main message and miracles", "She is the voice God uses to bring people to a place of surrender, then he brings the power of God through preaching and demonstration", "They take turns preaching and she handles the worship while he handles the word", "She prays while he preaches — a simultaneous tandem ministry"],
+      ans: 1,
+      exp: "Dassah draws people to salvation and sets hearts on fire — then Vincenzo mounts the pulpit and God demonstrates miraculous power."
+    },
+    {
+      id: 130,
+      q: "What happened in Nigeria specifically when Hadassah sang at the crusade?",
+      opts: ["Three thousand people gave their lives to Christ before Vincenzo preached a single word", "The atmosphere shifted dramatically — people began weeping, repenting, and yielding to the Spirit even before Vincenzo preached", "Blind eyes were opened and deaf ears were unstopped during her song", "The entire stadium fell to the floor as though slain in the Spirit"],
+      ans: 1,
+      exp: "Hadassah's singing functioned exactly as Senior Dad described — clearing the way spiritually so that by the time Vincenzo mounted the pulpit, the people were already prepared."
+    },
+    {
+      id: 131,
+      q: "What does Vincenzo say about the difference between praying for healing versus living in divine health?",
+      opts: ["Praying for healing is reactive; divine health is proactive — living in the fullness of God's life so sickness has no entry point", "They are essentially the same — divine health just requires more faith", "Divine health is only for apostles and prophets; regular believers can only access healing through prayer", "Healing is temporary; divine health is the permanent state all believers should pursue"],
+      ans: 0,
+      exp: "Vincenzo teaches that the highest standard is divine health — living so fully in God's Zoe life that sickness cannot take hold. Healing addresses symptoms; divine health prevents them."
+    },
+    {
+      id: 132,
+      q: "What was Oreofe studying on her phone during her spare time in the Dallas mansion?",
+      opts: ["Marriage counseling textbooks and research papers", "The Bible — specifically Psalms and Proverbs first", "Vincenzo's past sermons and ministry recordings", "Academic course materials to catch up on her interrupted education"],
+      ans: 1,
+      exp: "Vincenzo gave Oreofe the phone with the Bible — and her primary use of it was reading the Bible, starting with foundational books of Scripture."
+    },
+    {
+      id: 133,
+      q: "What was Mylah's specific role in the Septet?",
+      opts: ["Lead drummer and background vocalist", "Pianist and co-lead vocalist with Hadassah", "Bass guitarist and prayer leader", "Violinist and harmonizing vocalist"],
+      ans: 1,
+      exp: "Mylah plays piano and sings — she is one of the musicians in the Septet alongside Hadassah, who is the primary lead vocalist."
+    },
+    {
+      id: 134,
+      q: "How does Vincenzo describe his experience of the Holy Spirit's voice in contrast to his own thoughts?",
+      opts: ["The Holy Spirit's voice is louder and more authoritative than his thoughts", "His own thoughts feel uncertain and exploratory while Senior Dad's voice is always clear, precise, and carries unmistakable authority", "He cannot always distinguish between the two — he relies on Papa Noah to confirm", "The Holy Spirit always speaks in scripture references; his own thoughts never quote the Bible"],
+      ans: 1,
+      exp: "Throughout the story, Vincenzo receives crystal-clear instructions from Senior Dad — the voice is always distinct, authoritative, and unmistakably other than his own reasoning."
+    },
+    {
+      id: 135,
+      q: "What do we learn about Oreofe's faith during her years in captivity that distinguished her from losing hope entirely?",
+      opts: ["She had made a vow to God as a child that she would never deny Him regardless of circumstances", "She held tightly to scripture, particularly the Psalms, and maintained a private prayer life even while being abused", "She witnessed a miracle that renewed her faith midway through captivity", "She had a dream in which God assured her she would be rescued"],
+      ans: 1,
+      exp: "Oreofe maintained a consistent private prayer and scripture life even in captivity — the foundation of her survival was her unbroken relationship with God through the Word and prayer."
+    },
+    {
+      id: 136,
+      q: "What does Vincenzo say is the spiritual danger of social media and technology for young believers?",
+      opts: ["Technology itself is neutral — the danger is only in consuming sinful content", "It can become an idol that consumes their time and attention, replacing the living God as the primary source of direction and comfort in their lives", "It exposes them to worldly philosophies that undermine biblical truth", "It makes them relationally shallow by replacing real human community with digital connections"],
+      ans: 1,
+      exp: "Vincenzo warned Oreofe: 'The phone can become an idol... Your phone may be your GPS but it should not provide direction for your life... God is jealous for your time and your heart.'"
+    },
+    {
+      id: 137,
+      q: "What specific trait did Vincenzo's mom notice in Oreofe during their first meeting that told her Oreofe was a remarkable young woman?",
+      opts: ["Her elegant posture and dignified manner despite her rough appearance", "Her immediate act of humility in kneeling, and the deep resilience and quiet strength in her eyes", "Her fluent and well-articulated English despite her background", "Her immediate hunger to learn and her intellectual questions about the Bible"],
+      ans: 1,
+      exp: "Dr. Jewel was immediately drawn to the humble posture and the quiet depth of character in Oreofe — traits that poverty and captivity could not erase."
+    },
+    {
+      id: 138,
+      q: "What does Vincenzo say about why God chose to have him go personally to the forest rather than sending someone else?",
+      opts: ["Only a prophet carries the authority to raise the dead in that specific situation", "God's instructions are His own — questioning them is not Vincenzo's place; he simply obeys", "The enemy had placed spiritual barriers only Vincenzo's anointing could break through", "Oreofe's faith specifically needed to encounter Vincenzo's particular gift to be activated"],
+      ans: 1,
+      exp: "Senior Dad instructed Vincenzo directly and specifically — Vincenzo's consistent response is obedience without demanding explanation, trusting God's sovereign choice."
+    },
+    {
+      id: 139,
+      q: "In what way did Oreofe's experience of captivity change her prayer life compared to how she prayed as a teenager?",
+      opts: ["She became more ritualistic and disciplined in set prayer times", "She became more desperate, fervent, and unashamed — captivity stripped away all religious performance and left only raw dependence on God", "She became quieter and more contemplative rather than vocal in prayer", "She actually prayed less — the trauma made it hard to believe her prayers were heard"],
+      ans: 1,
+      exp: "Captivity transformed Oreofe's prayer from routine to raw necessity — her dependency on God deepened to a level of desperation and authenticity that formal church settings rarely produce."
+    },
+    {
+      id: 140,
+      q: "What specific gift of the Spirit does Vincenzo consistently operate in throughout the story, beyond healing and raising the dead?",
+      opts: ["Tongues and interpretation of tongues", "Word of knowledge and discerning of spirits — reading people's hearts, thoughts and spiritual states", "Prophetic dreams and visions given to him each night", "The gift of administration — organizing complex ministry operations"],
+      ans: 1,
+      exp: "Vincenzo consistently demonstrates the word of knowledge and discerning of spirits — reading people's thoughts, knowing their pasts, and discerning what is happening in the spirit realm."
+    },
+    {
+      id: 141,
+      q: "How does Dr. Jewel describe the ideal qualities of a good marriage counselor?",
+      opts: ["Academic credentials, emotional intelligence, and years of personal experience in a healthy marriage", "A deep understanding of human nature rooted in both biblical wisdom and practical psychology, combined with genuine empathy and confidentiality", "Personal experience of a difficult marriage that was restored, giving authentic testimony", "Strict neutrality — never taking sides and always presenting both perspectives equally"],
+      ans: 1,
+      exp: "Dr. Jewel's mentorship program reflects her conviction that excellent counselors combine scriptural foundation with real understanding of human psychology and genuine compassion."
+    },
+    {
+      id: 142,
+      q: "What does Vincenzo pray over Oreofe when he formally dedicates her healing to God?",
+      opts: ["That God would erase every memory of trauma and restore her to total wholeness as though captivity never happened", "That God would heal her wounds, restore years the locust ate, and use her pain as a platform for His glory among others who have suffered", "That God would give her a new identity and complete amnesia of her past so she could begin fresh", "That God would bring justice on her captors swiftly and visibly"],
+      ans: 1,
+      exp: "Vincenzo's prayer for Oreofe reflects the Joel 2:25 principle — that God restores what the locust has eaten and transforms pain into purpose and testimony."
+    },
+    {
+      id: 143,
+      q: "What does the story communicate about the role of suffering in the lives of those whom God is preparing for great assignments?",
+      opts: ["Suffering is a sign that God is angry and the person needs to repent of hidden sin", "Suffering at the hands of the enemy is never God's plan and should always be immediately rebuked", "Some suffering functions as preparation — it builds depth of character, compassion, and dependency on God that comfort cannot produce", "All suffering will be removed from the lives of true believers as a sign of their faith"],
+      ans: 2,
+      exp: "Oreofe's years of captivity, though caused by evil men, produced in her a depth of prayer, scripture knowledge, and dependence on God that only adversity can forge."
+    },
+    {
+      id: 144,
+      q: "When the dying man in the forest asked Vincenzo to prove God exists, what was Vincenzo's primary response?",
+      opts: ["He performed a miracle on the spot — healing the man's wounds visibly as proof of God's existence", "He pointed to creation and logic — arguing the impossibility of a universe without a Creator", "He refused to argue — instead he simply told the man about God's love and led him in prayer for salvation before he died", "He told the man to look at his own miraculous survival that day as evidence of God"],
+      ans: 2,
+      exp: "Vincenzo's response to the dying man bypassed argument — he met the man's doubt with love, shared the gospel, and led him in the sinner's prayer as he passed away."
+    },
+    {
+      id: 145,
+      q: "What does Vincenzo's consistency in returning home to his parents' house — despite owning mansions — communicate about his values?",
+      opts: ["He is financially dependent on his parents and cannot maintain a mansion alone", "He values family above personal comfort and independence — family is his emotional anchor and spiritual foundation", "Papa Noah's authority over him prevents him from exercising his financial independence", "He is afraid of living alone because of the spiritual warfare that follows him"],
+      ans: 1,
+      exp: "Vincenzo's choice to remain at home despite vast wealth communicates that family connection is central to his emotional and spiritual health — it is a value not an obligation."
+    },
+    {
+      id: 146,
+      q: "What does the story suggest about Oreofe's future role in Vincenzo's life, beyond that of someone he rescued?",
+      opts: ["She will become one of many people in his growing ministry team", "She will become a powerful prayer intercessor for his ministry specifically", "The narrative carefully positions her as someone of increasing personal and spiritual significance to Vincenzo himself", "She will become a famous marriage counselor completely independent of Vincenzo's ministry"],
+      ans: 2,
+      exp: "The narrative carefully positions Oreofe — through her prayer for Vincenzo, their growing interactions, and the name Adonia — as someone of personal and spiritual significance to him beyond mere ministry involvement."
+    },
+    {
+      id: 147,
+      q: "What does Vincenzo say about the importance of guarding one's confession and the words we speak?",
+      opts: ["Words are powerful only when spoken in formal prayer — casual speech does not carry spiritual weight", "Our words create our reality — consistently speaking God's word programs the spirit to align with heaven's perspective", "Negative words only matter if spoken with genuine faith in their negative outcome", "Only the words of prophets and apostles carry weight in the spirit realm"],
+      ans: 1,
+      exp: "Vincenzo's consistent use of scripture and deliberate word-choices reflects his deep belief that what we confess shapes our spiritual reality and relationship with God."
+    },
+    {
+      id: 148,
+      q: "What does the name 'Adonia' mean, as Vincenzo used it when he read Oreofe's thoughts?",
+      opts: ["My Lord and God", "Beloved daughter", "Beautiful", "Anointed one"],
+      ans: 2,
+      exp: "When Vincenzo called Oreofe 'Adonia,' she wondered if it meant she was beautiful — the name indeed means beautiful/my Lord, and in context it was a term acknowledging her beauty while rebuking her wandering thoughts."
+    },
+    {
+      id: 149,
+      q: "What key piece of wisdom does Papa Noah share with Vincenzo about the patience required in waiting for God's chosen partner?",
+      opts: ["'Good things come to those who wait — and the best things come to those who wait on God specifically'", "'Do not mistake activity for progress — many men marry in a hurry and repent at leisure'", "'God's timing in sending the right person is never late and never early — trust His process even when it feels slow'", "'A prophet who cannot wait on God for a wife cannot wait on God for anything else — patience is the prophetic life'"],
+      ans: 2,
+      exp: "Papa Noah's counsel consistently emphasizes that God's timing for a divine partner is perfect — Vincenzo must trust the process even under pressure from women pursuing him."
+    },
+    {
+      id: 150,
+      q: "What does the story ultimately say is the foundation of Vincenzo's extraordinary gifting?",
+      opts: ["Natural intelligence and a photographic memory given as a genetic inheritance", "A lifetime of consecration — 22 years of consistent, wholehearted service to God beginning at age 5", "The anointing passed down directly from Prophet Renan through the grandmother's womb dedication", "His daily seven-hour prayer sessions which began at age 10"],
+      ans: 1,
+      exp: "Vincenzo's extraordinary gifts flow from a foundation of 22 years of faithful, wholehearted service to God — it is consecration over time, not just a one-time encounter."
+    },
+    {
+      id: 151,
+      q: "What does Vincenzo say happens to a believer who consistently feeds on the Word of God daily?",
+      opts: ["Their faith gradually increases to the level where they can perform miracles", "The Zoe life inside them becomes so active that sickness, disease, and spiritual weakness cannot easily find a foothold", "They develop the ability to hear God's voice more clearly than others around them", "God begins to give them prophetic dreams and visions as a reward for their faithfulness"],
+      ans: 1,
+      exp: "Vincenzo's teaching connects daily Scripture feeding with the activation of Zoe — God's kind of life — making the body an inhospitable environment for sickness and weakness."
+    },
+    {
+      id: 152,
+      q: "What does Oreofe's consistent kneeling before Vincenzo and Dr. Jewel reveal about her Nigerian cultural background?",
+      opts: ["That she was trained in a strict religious sect that required physical submission before elders", "That Nigerian culture — particularly Yoruba tradition — requires females to kneel before elders as a sign of honor and respect", "That she personally chose to kneel as her private act of gratitude for being rescued", "That she was terrified of Vincenzo's anointing and prostrated herself out of fear"],
+      ans: 1,
+      exp: "Pastor Benson explained that in Nigerian culture, females kneel as a sign of respect for elders and authority — Oreofe was simply expressing her culturally ingrained form of honor."
+    },
+    {
+      id: 153,
+      q: "How does Vincenzo react when people treat him with extreme reverence that borders on worship?",
+      opts: ["He accepts it graciously because he understands it honors the anointing on his life, not him personally", "He consistently redirects all honor to God and deflects personal adoration — he is uncomfortable being treated as more than a servant of God", "He allows it in ministry settings but discourages it in personal interactions", "He rebukes it harshly every time, often embarrassing those who express it"],
+      ans: 1,
+      exp: "Vincenzo's character is consistently humble — he redirects all honor to God. When Oreofe kneels before him, he gently corrects her and humanizes himself by asking her to call him Vinnie."
+    },
+    {
+      id: 154,
+      q: "What does the story reveal about Vincenzo's relationship with wealth and material possessions?",
+      opts: ["He is financially reckless and gives away money faster than he can earn it", "He is blessed with great wealth but holds it loosely — he lives in his parents' house and uses wealth as a tool for God's work, not personal status", "He is secretly uncomfortable with his wealth and regularly questions whether it is appropriate for a man of God", "He keeps his wealth private and never discusses finances with anyone except Papa Noah"],
+      ans: 1,
+      exp: "Vincenzo's relationship with wealth is characterized by abundance without attachment — he owns over ten mansions but lives at home, using his wealth for kingdom purposes without building his identity around it."
+    },
+    {
+      id: 155,
+      q: "What made the airport miracle of Oreofe passing through without documents particularly significant in the story?",
+      opts: ["It proved that Vincenzo had authority over government systems and institutions", "It demonstrated God's supernatural involvement in the entire rescue — from forest to departure, God was orchestrating every step", "It showed that miracles can substitute for proper legal documentation in exceptional circumstances", "It was a test of Vincenzo's faith — he had to choose to walk forward without a natural solution"],
+      ans: 1,
+      exp: "The airport miracle sealed the divine narrative of the entire rescue — God was not only present in the forest but actively clearing every obstacle for Oreofe's full restoration."
+    },
+    {
+      id: 156,
+      q: "What does the story communicate about the spiritual atmosphere that Hadassah creates through her singing?",
+      opts: ["Her singing is primarily a musical performance that warms the emotional temperature of the crowd", "Her singing carries an anointing that genuinely shifts the spiritual atmosphere — drawing souls and softening hearts in ways that preaching alone cannot accomplish at the outset", "Her voice is so naturally beautiful that it produces an emotional response that people mistake for a spiritual experience", "Her singing is primarily intercessory — she is praying in song, not performing for the crowd"],
+      ans: 1,
+      exp: "Senior Dad described Hadassah's role as functionally prophetic — her singing does spiritual work that prepares soil for the miraculous harvest Vincenzo's ministry produces."
+    },
+    {
+      id: 157,
+      q: "What does Oreofe call Vincenzo throughout most of the story after he asks her not to be so formal?",
+      opts: ["Prophet Vincenzo", "Vinnie", "Sir", "Brother Vincenzo"],
+      ans: 1,
+      exp: "Vincenzo specifically asked Oreofe: 'This is Dallas. Call me Vinnie, Okay?' — and Vinnie becomes how she refers to him throughout the narrative."
+    },
+    {
+      id: 158,
+      q: "What specific miracle occurred in the forest in relation to the venomous snake beyond Vincenzo killing it?",
+      opts: ["The snake came back to life and then fled, indicating demonic origin", "Vincenzo was bitten but showed no symptoms whatsoever — a fulfillment of Mark 16:18", "After the snake was killed, additional snakes in the area seemed to scatter as though commanded to leave", "The snake bite marks on Oreofe's ankle healed instantly when Vincenzo prayed over it"],
+      ans: 1,
+      exp: "Vincenzo grabbed the highly venomous snake with his bare hands and suffered no harm — a direct demonstration of Mark 16:18: 'they will pick up snakes with their hands and will not be harmed.'"
+    },
+    {
+      id: 159,
+      q: "What does the story tell us about how Vincenzo was raised by his parents in terms of spiritual discipline?",
+      opts: ["He was raised in strict religious observance with many rules and restrictions", "He was raised with consistent exposure to the Word, prayer, and the presence of God as the natural atmosphere of daily family life", "He was primarily self-taught spiritually — his gifts emerged independently rather than through parental training", "His parents were absent due to ministry travel, so Papa Noah functioned as his primary spiritual parent"],
+      ans: 1,
+      exp: "The family atmosphere — with Dr. Jewel's faith and spiritual depth evident — shows that Vincenzo was raised in a home where God's presence was the natural daily environment."
+    },
+    {
+      id: 160,
+      q: "What does Oreofe immediately sense about Vincenzo's household the moment she enters the Dallas mansion?",
+      opts: ["She senses great wealth and power that makes her uncomfortable with her own poverty", "She senses an overwhelming peace and presence of God that she had not felt even in church as a child", "She feels immediately at home because it reminds her of the home she lost during kidnapping", "She feels overwhelmed and out of place among such highly educated and gifted people"],
+      ans: 1,
+      exp: "Oreofe immediately senses a spiritual atmosphere in Vincenzo's home — the presence of God is palpable, and it is unlike anything she encountered before."
+    },
+    {
+      id: 161,
+      q: "What does Vincenzo's relationship with Papa Noah demonstrate about the importance of spiritual mentorship?",
+      opts: ["That every believer must have a formal, paid spiritual director to grow properly", "That there is no substitute for a mature, experienced spiritual father who knows you, loves you, and will tell you the truth — even when it is uncomfortable", "That spiritual mentorship is only necessary at the beginning of ministry and becomes unnecessary with experience", "That the Holy Spirit alone is sufficient guidance — human mentors are secondary and optional"],
+      ans: 1,
+      exp: "Vincenzo's relationship with Papa Noah exemplifies healthy spiritual mentorship — accountability, wisdom, honest correction, and unconditional support from an elder who has journeyed far."
+    },
+    {
+      id: 162,
+      q: "Why does Vincenzo say he cannot simply ignore his feelings for Hadassah through willpower alone?",
+      opts: ["Because feelings are given by God and suppressing them is spiritually dangerous", "Because Senior Dad has confirmed that his feelings have developed into genuine love — and love this deep cannot be reasoned away, only divinely redirected", "Because Hadassah keeps putting herself in situations that make it impossible not to feel for her", "Because ignoring feelings leads to emotional repression that eventually explodes in destructive ways"],
+      ans: 1,
+      exp: "Senior Dad's warning to Vincenzo acknowledges the depth and reality of what he feels — the instruction isn't to deny but to properly align his heart to God's timing and plan."
+    },
+    {
+      id: 163,
+      q: "What does the novel suggest about the connection between Vincenzo's anointing and his personal holiness?",
+      opts: ["The two are completely separate — God uses imperfect vessels and holiness does not enhance anointing", "His anointing flows from and is protected by his consecrated lifestyle — compromise would not just reduce his power but fundamentally corrupt his calling", "His anointing is irrevocable as a prophetic gift, but personal sin would block specific miracles", "The story intentionally leaves this connection ambiguous, letting readers draw their own conclusions"],
+      ans: 1,
+      exp: "The entire narrative of Vincenzo protecting his emotional life, guarding his relationships, and obeying God precisely — even against his own preferences — reflects the conviction that his holiness and his anointing are inseparable."
+    },
+    {
+      id: 164,
+      q: "What does Oreofe think the first time she hears Hadassah and the Septet singing together in the studio?",
+      opts: ["She thinks she has stumbled into a professional recording studio by mistake — she did not expect this level of talent", "She is transported — the music carries her into an experience of worship she had never known, making her weep", "She feels profoundly out of place and inferior — questioning her own worth among such gifted people", "She immediately starts humming along, discovering she has a natural musical gift she didn't know about"],
+      ans: 2,
+      exp: "The music studio moment reveals Oreofe's insecurity — she feels useless and out of place among such gifted people, which prompts Vincenzo's correction about purpose and value."
+    },
+    {
+      id: 165,
+      q: "What spiritual discipline did Vincenzo practice specifically before the African crusade that Senior Dad indicated was foundational?",
+      opts: ["A seven-day water fast before every major crusade without exception", "Extended prayer combined with complete surrender — searching himself for anything that could hinder God's power before mounting the pulpit", "Reading through the entire book of Acts each time he prepared for healing crusades", "Two hours of silent meditation in tongues before each major service"],
+      ans: 1,
+      exp: "Before mounting the pulpit, Vincenzo spent time in intense prayer — asking God to search him, remove hindrances, and flow through him unhindered. This pre-service self-examination was critical."
+    },
+    {
+      id: 166,
+      q: "What does Vita's behavior toward Casper throughout the story reveal about her character?",
+      opts: ["She is manipulative — pretending to support Dassah while secretly working to win Casper", "She is quietly vulnerable — she loves Casper deeply but expresses her feelings only to Vincenzo, not directly to Casper", "She is aggressive — confronting both Casper and Dassah openly about her feelings", "She is resigned — she has already given up on Casper before the story begins"],
+      ans: 1,
+      exp: "Vita's quiet vulnerability is captured in her crying when she overhears Casper propose to Dassah — she loves him deeply but has only communicated this to Dassah, not directly pursued Casper."
+    },
+    {
+      id: 167,
+      q: "What does the story suggest about the nature of true prophetic authority when Vincenzo raises Oreofe from the dead?",
+      opts: ["True prophetic authority requires long fasting and prayer preparation before any miracle", "True prophetic authority operates through immediate obedience to the Spirit — Vincenzo did not pray for hours; he simply spoke what Senior Dad directed", "Raising the dead requires a special second-level anointing beyond basic prophetic gifting", "The miracle was possible only because Oreofe had personal faith — the prophet merely activated what she believed"],
+      ans: 1,
+      exp: "Vincenzo did not go through elaborate preparation — he spoke what Senior Dad instructed with immediate authority. True prophetic power operates through real-time obedience, not ritual preparation."
+    },
+    {
+      id: 168,
+      q: "What does Oreofe's dream about the plane crash reveal about her growing emotional attachment to Vincenzo?",
+      opts: ["She has developed a supernatural prophetic gift that is revealing real dangers to Vincenzo's life", "Her subconscious fear of losing the first person who has shown her genuine protective love is surfacing through her dreams", "God is using the dream to train her as an intercessor specifically for Vincenzo's ministry", "The dream has no emotional significance — it is purely a spiritual warning from God about real danger"],
+      ans: 1,
+      exp: "Vincenzo explains this directly: dreaming of a plane crash involving a loved one symbolizes your fear of losing them. Oreofe's attachment to Vincenzo has grown deep enough that her fear of his absence is expressing itself in her dreams."
+    },
+    {
+      id: 169,
+      q: "What specific aspect of Vincenzo's character does Papa Noah most often affirm during their private conversations?",
+      opts: ["His extraordinary intelligence and intellectual grasp of theology", "His faithfulness — the quality of remaining consistent in seeking God over 22 years despite extraordinary gifts and public success", "His miraculous power and the undeniable evidence of God's hand on his life", "His business acumen in managing both ministry and finances with wisdom"],
+      ans: 1,
+      exp: "Papa Noah was charged by Renan to ensure Vincenzo remained faithful — and faithfulness, not gifting, is what Papa Noah most treasures and affirms in Vincenzo."
+    },
+    {
+      id: 170,
+      q: "What does Vincenzo tell Oreofe is the single most important thing she can do for her healing and recovery?",
+      opts: ["Find a church with a powerful healing ministry and receive prayer consistently", "Stay consistent in the Word and prayer — everything else is secondary", "Build strong relationships with the Septet who will model healthy faith for her", "Allow time to naturally heal the trauma rather than rushing her spiritual development"],
+      ans: 1,
+      exp: "Vincenzo's primary instruction to Oreofe is consistent engagement with the Word and prayer — he rebukes her when she neglects it for even two days."
+    },
+    {
+      id: 171,
+      q: "What was the specific time of day when Vincenzo and Samuel left the hotel to go into the forest?",
+      opts: ["Around 9 PM", "Around 3 AM — very late into the night", "At midnight exactly", "Before dawn at 4 AM"],
+      ans: 2,
+      exp: "They left the hotel at midnight — by the time they found Oreofe and checked the time, it was half past 6 in the morning."
+    },
+    {
+      id: 172,
+      q: "What surprising physical detail about Samuel's endurance in the forest is mentioned in the story?",
+      opts: ["He had severe blisters on his feet from walking so far on rough terrain", "Both he and Vincenzo became genuinely tired and disoriented after about thirty minutes in the forest", "He fell twice and had to be helped up by Vincenzo during the search", "His phone ran out of battery just when they needed it most"],
+      ans: 1,
+      exp: "'Samuel and I both started to get weird and tired after about thirty minutes.' Even two anointed men were not immune to the physical and spiritual difficulty of the forest environment."
+    },
+    {
+      id: 173,
+      q: "What does the detail of Vincenzo checking his watch in the forest indicate about his mindset during the mission?",
+      opts: ["He was anxious about time and worried about missing the crusade schedule", "He remained calm, methodical, and practically minded even in a spiritually charged and physically difficult situation", "He was tracking how long Oreofe had been dead to determine if resurrection was still possible", "He was giving Samuel regular time updates to keep both of them from panicking"],
+      ans: 1,
+      exp: "Vincenzo checking his watch — noting it was half past six — reveals he remained measured and present even in extraordinary circumstances. He is never frantic, always grounded."
+    },
+    {
+      id: 174,
+      q: "What does the story reveal about the physical condition of the forest where Oreofe was held?",
+      opts: ["It was a dense jungle with dangerous wildlife, limited light, and a disorienting layout that made navigation extremely difficult", "It was a relatively accessible woodland near the outskirts of the city where terrorists frequently operated", "It was a sacred forest used for religious rituals — the spiritual oppression was palpable from the entrance", "The details of the forest's physical environment are intentionally left vague to keep focus on the spiritual dimension"],
+      ans: 0,
+      exp: "The forest's difficulty is evident — both Vincenzo and Samuel became disoriented and physically exhausted. The environment itself was dangerous and spiritually oppressive."
+    },
+    {
+      id: 175,
+      q: "What is the specific instruction God gave Vincenzo about Oreofe immediately after raising her from the dead?",
+      opts: ['"Take her to the nearest hospital immediately"', '"Take her with you and We will discuss it in detail later"', '"Heal her wounds then release her to Pastor Benson\'s care"', '"Leave her here — she has served her purpose in this moment"'],
+      ans: 1,
+      exp: "Senior Dad told Vincenzo: 'Take her with you and We will discuss it in detail later.' No full explanation — just a clear instruction to obey in the moment."
+    },
+    {
+      id: 176,
+      q: "How does Vincenzo explain his prophetic awareness of danger to those around him?",
+      opts: ["He says it is like a physical sensation — a warm or cold feeling in his chest that alerts him to spiritual realities", "He says Senior Dad simply tells him — sometimes in words, sometimes through an overwhelming inner knowing", "He says he sees brief flashes of what will happen, like short film clips in his mind", "He says the gift works through his hands — he feels it when he touches objects or people"],
+      ans: 1,
+      exp: "Throughout the story, Vincenzo's prophetic awareness comes through Senior Dad's voice — clear, direct communication that he has learned to recognize and trust over 22 years."
+    },
+    {
+      id: 177,
+      q: "What does the story communicate about Vincenzo's relationship with fame and public recognition?",
+      opts: ["He actively cultivates his public profile as a tool for ministry expansion", "He is deeply uncomfortable with personal celebrity — he consistently deflects to God and maintains genuine humility", "He accepts fame pragmatically as a tool but takes precautions to protect his privacy", "He is ambivalent about fame — neither actively seeking nor actively avoiding it"],
+      ans: 1,
+      exp: "Vincenzo's consistent character is humble deflection — when honored, he redirects to God. Papa Noah's description of him emphasizes character qualities, not celebrity status."
+    },
+    {
+      id: 178,
+      q: "What specific detail about Oreofe's Bible reveals how well-used it was during her four years of captivity?",
+      opts: ["Many pages were torn and missing from being handled so often in the rough forest conditions", "Specific verses were underlined and the margins were filled with handwritten notes and prayers", "The cover was completely worn away from constant handling in all weather conditions", "Several passages were so memorized that she could quote them verbatim without opening the book"],
+      ans: 2,
+      exp: "Oreofe's Bible showed evidence of years of intense use in difficult conditions — a physical testimony to her faithful dependence on the Word through every season of captivity."
+    },
+    {
+      id: 179,
+      q: "What does Vincenzo's insistence on living with his family — rather than alone in one of his mansions — say about his understanding of his emotional vulnerability?",
+      opts: ["He acknowledges freely that he needs human connection and family love to remain emotionally healthy — isolation would expose him to emotional weaknesses that could compromise his ministry", "He is simply obedient to Papa Noah's instruction without necessarily understanding the reason himself", "He feels protected from spiritual attack when surrounded by the prayers of his family", "It is a practical decision — his family manages his schedule and he needs them nearby"],
+      ans: 0,
+      exp: "'Now I understand it all. I was not strong enough emotionally living alone.' Vincenzo acknowledges his emotional need for family — a rare and authentic admission of vulnerability from a man of extraordinary gifting."
+    },
+    {
+      id: 180,
+      q: "What important thing does Papa Noah tell Vincenzo that God said specifically about his future wife?",
+      opts: ['"She will come to you — you will not have to search for her"', '"I do not believe that God would call you to marry someone you do not love... God wants the BEST YOU LOVE FOR YOU"', '"Your wife is already in your circle — you know her but have not recognized her yet"', '"Do not rush — you will receive a clear sign when the time has come"'],
+      ans: 1,
+      exp: "Papa Noah's counsel: 'I do not believe that God would call you to marry someone you do not love... God wants the BEST YOU LOVE FOR YOU.' This reframes Vincenzo's fear about an unloving arranged match."
+    },
+    {
+      id: 181,
+      q: "What does the story say about the long-term effect of Oreofe's rescue on the Septet as a group?",
+      opts: ["The group grows slightly larger as Oreofe is gradually incorporated into their worship sessions", "Her presence introduces a new energy and depth of prayer into the group that refreshes their spiritual dynamic", "The rescue creates tension within the Septet as some members struggle with jealousy over Vincenzo's attention to Oreofe", "Nothing significant changes for the Septet — Oreofe remains an outsider to their circle"],
+      ans: 1,
+      exp: "Oreofe's rescue and subsequent presence introduces a new prayer depth and freshness into the Septet — her life of captivity-forged prayer enriches the group's spiritual practice."
+    },
+    {
+      id: 182,
+      q: "What personal spiritual struggle does Vincenzo reveal to Papa Noah that shows he is not invulnerable despite his anointing?",
+      opts: ["Doubt about whether God still speaks to him after seasons of ministry fatigue", "The growing depth of his feelings for Hadassah and his fear of what that might cost him", "Anxiety about the ten women pursuing him and whether he will make the wrong choice under pressure", "Uncertainty about whether his calling is truly prophetic or whether he has misunderstood his gifts"],
+      ans: 1,
+      exp: "Vincenzo confides the reality of his feelings for Hadassah to Papa Noah — acknowledging both their depth and his genuine fear about where they could lead if not properly surrendered to God."
+    },
+    {
+      id: 183,
+      q: "What physical detail about Vincenzo's appearance is consistently highlighted throughout the story?",
+      opts: ["His unusually tall stature that commands attention in every room", "His long hair — which carries both physical beauty and deep spiritual significance rooted in his grandfather's dying instruction", "His eyes — described as penetrating and capable of seeing through people into their hearts", "His hands — described as uniquely large and warm, channels through which God's healing flows"],
+      ans: 1,
+      exp: "Vincenzo's long hair is the most consistently highlighted physical feature — it is beautiful, unusual, and theologically significant as the visible symbol of God's covenant with him."
+    },
+    {
+      id: 184,
+      q: "What does Vincenzo say is the difference between a genuine prophetic instruction from God and a desire of his own heart that he mistakes for God's voice?",
+      opts: ["God's voice always feels comfortable and confirms what he already wants; his own desires create discomfort", "Senior Dad's voice carries a clarity and specificity that his own thoughts never possess — and God's instructions frequently require things Vincenzo would never choose for himself", "He distinguishes them by their long-term fruit — if the outcome is good, it was God; if it was harmful, it was his own desire", "He cannot always distinguish them — which is why Papa Noah serves as his external confirmation system"],
+      ans: 1,
+      exp: "The proof that Senior Dad's voice is genuine throughout the story is that God consistently asks Vincenzo to do things he would not naturally choose — go to the forest at midnight, tell Mylah NO, hold his feelings for Hadassah."
+    },
+    {
+      id: 185,
+      q: "What does Dr. Jewel's warmth toward Oreofe reveal about the kind of home Vincenzo was raised in?",
+      opts: ["A strict and formal household where outsiders were treated politely but kept at a respectful distance", "A genuinely warm, open-hearted home where love was extended freely to strangers — the natural overflow of a family living in God's love", "A ministry-focused household that welcomed people as potential members of Vincenzo's team", "A wealthy and generous household where hospitality was a cultural expectation and social responsibility"],
+      ans: 1,
+      exp: "Dr. Jewel's immediate embrace of Oreofe — holding her before speaking, making her feel completely safe — reflects a home culture of genuine, unconditional love, not social hospitality."
+    },
+    {
+      id: 186,
+      q: "What does Casper's approach to Hadassah — seeking Vincenzo's blessing first — reveal about the culture within the Septet?",
+      opts: ["It reveals a hierarchical structure where Vincenzo has final say over all personal decisions", "It reveals a culture of honor, accountability, and genuine spiritual covering — they are not just friends, they are a spiritual family with real relational accountability", "It reveals that Hadassah has previously expressed that she wants Vincenzo to approve her future husband", "It reveals that Casper is unsure of his own feelings and uses Vincenzo as a way to test if his love is real"],
+      ans: 1,
+      exp: "Casper seeking Vincenzo's blessing before approaching Dassah reflects a culture of genuine spiritual accountability within the Septet — they operate as a covenant community, not merely a friend group."
+    },
+    {
+      id: 187,
+      q: "What does the story reveal about the difference between how Oreofe was treated in captivity versus how she is treated in Dallas?",
+      opts: ["The contrast is primarily physical — from starvation and abuse to food and comfort", "The contrast is total — from dehumanization and violence to dignity, protection, love, and investment in her future", "The contrast is spiritual — from spiritual oppression to an environment of prayer and worship", "The contrast is primarily emotional — from terror and grief to peace and stability"],
+      ans: 1,
+      exp: "The story's contrast between captivity and Dallas is comprehensive — physical safety, emotional warmth, spiritual environment, professional mentorship, and genuine love are all dimensions of Oreofe's restoration."
+    },
+    {
+      id: 188,
+      q: "What does the title 'Prophet Vincenzo' signify in terms of how the story positions him among his generation?",
+      opts: ["He is the greatest prophet of his generation globally — no one else operates at his level", "He is one of several prophets in his generation but uniquely distinguished by his combination of gifts, character, and consecration", "The title is merely a formal church designation — it does not necessarily indicate he is genuinely prophetic", "He is a prophet in the biblical sense — one who speaks God's word, demonstrates God's power, and serves God's people regardless of formal recognition"],
+      ans: 3,
+      exp: "The story positions Vincenzo as a prophet in the fullest biblical sense — not just a preacher with a title, but a genuine prophetic voice who demonstrates the full range of prophetic function: word, power, and character."
+    },
+    {
+      id: 189,
+      q: "What does Vincenzo's refusal to live in any of his own mansions — despite having over ten — teach about his relationship to material success?",
+      opts: ["That wealth is spiritually dangerous and he keeps it at arm's length out of fear", "That success in God's kingdom is measured by faithfulness and availability, not by personal comfort or the display of what God has given", "That he is in a permanent season of intentional fasting from personal comfort as a spiritual discipline", "That he feels guilty about the wealth disparity between himself and the people he ministers to"],
+      ans: 1,
+      exp: "Vincenzo's lifestyle choice communicates powerfully: material success is held loosely. He is as comfortable in his parents' home as he would be in a mansion — possessions do not define or comfort him."
+    },
+    {
+      id: 190,
+      q: "What does Oreofe's fervent two-hour prayer for Vincenzo's safety while he was in Australia demonstrate about her spiritual growth?",
+      opts: ["That she has quickly developed a prophetic prayer gift that rivals Vincenzo's own intercessory capacity", "That in just a short time in Dallas, her prayer life has deepened from survival-focused prayer to genuinely other-centered, sacrificial intercession", "That her feelings for Vincenzo are romantic — and romantic love is the motivation behind her extended prayer", "That she has found her spiritual gift of intercession and Dr. Jewel is beginning to train her in it"],
+      ans: 1,
+      exp: "Oreofe's two-hour prayer for Vincenzo marks significant spiritual growth — she is no longer praying only for herself. Her prayer life has expanded to genuine intercession for others."
+    },
+    {
+      id: 191,
+      q: "What does Papa Noah mean when he says God's instructions are given to 'bless and uplift' us — not to benefit God Himself?",
+      opts: ["That God does not need anything from us — He is self-sufficient and our obedience contributes nothing to His power", "That obedience is not a burden God imposes for His benefit — it is a gift He gives us that creates the conditions for His blessing to flow into our lives", "That God is primarily interested in our happiness, not our holiness", "That instructions from God are always optional — He gives them as suggestions, not commands"],
+      ans: 1,
+      exp: "Papa Noah's insight reframes obedience as gift, not burden — God's instructions are the pathway He designs for our flourishing, not requirements that benefit Him personally."
+    },
+    {
+      id: 192,
+      q: "What does Vita's gift as a writer contribute to the ministry beyond the Septet's musical function?",
+      opts: ["She ghost-writes Vincenzo's sermons and ministry materials", "She documents Vincenzo's ministry stories and testimonies, potentially becoming the narrative voice that extends his testimony beyond what music alone can carry", "She writes prophetic letters to nations and church leaders as directed by the Holy Spirit", "She manages all ministry communications including social media and press releases"],
+      ans: 1,
+      exp: "Vita's writing gift positions her as the documenter of God's works — her note-taking of Vincenzo's sleep-songs at the story's opening is the first visible expression of this calling."
+    },
+    {
+      id: 193,
+      q: "What warning does the story give through the character of the ten women pursuing Vincenzo about misinterpreting personal desire as divine instruction?",
+      opts: ["That women who pursue ministers are inherently manipulative and spiritually dangerous", "That sincere believers can genuinely convince themselves God has spoken something He has not — mistaking personal longing for prophetic direction", "That God never tells one person to marry another specific person — marriage guidance is always general, never specific", "That the only reliable way to know God's will for marriage is through external prophetic confirmation from a pastor"],
+      ans: 1,
+      exp: "Ten women simultaneously claiming God told them to marry Vincenzo is the story's gentle but pointed warning: sincerity and intensity of feeling do not guarantee divine accuracy. Personal desire can masquerade as prophetic direction."
+    },
+    {
+      id: 194,
+      q: "What does the story suggest about the relationship between Vincenzo's prophetic gifting and his emotional interior life?",
+      opts: ["The two are entirely separate — his gifts operate independently of his emotional state", "His emotional interior is the most vulnerable frontier of spiritual warfare — the enemy targets it precisely because it is the area where compromise would be most consequential", "His gifts actually protect him emotionally — operating in the prophetic keeps him spiritually insulated", "His emotional struggles are evidence that his gifts are not yet mature enough to sustain the level of anointing he carries"],
+      ans: 1,
+      exp: "Senior Dad's warning about Hadassah, and Papa Noah's counsel about guarding his heart, both center on the reality that Vincenzo's emotions are the battlefield the enemy would most like to exploit."
+    },
+    {
+      id: 195,
+      q: "What is the significance of Gracia being the name Vincenzo spoke over Oreofe rather than her given name Oreofe?",
+      opts: ["It was simply a spontaneous word that came out — Vincenzo himself did not know why he said Gracia", "It was a prophetic declaration — in calling her Gracia (grace), Vincenzo was speaking her new identity over her: she is not a victim, she is a living testimony of God's grace", "It was a practical choice — Senior Dad told him her given name Oreofe was too long to say in a moment of crisis", "It was a cultural adaptation — Gracia was an easier name for Vincenzo and his American team to remember and pronounce"],
+      ans: 1,
+      exp: "The name Gracia was prophetically intentional — Vincenzo was speaking her new identity at the moment of resurrection. She did not just survive; she is grace personified — a walking testimony of what God's grace can restore."
+    },
+    {
+      id: 196,
+      q: "What does the story communicate about the role of consistent prayer in maintaining the kind of anointing Vincenzo operates?",
+      opts: ["Anointing is a one-time gift that does not require maintenance — it either grows or is lost based on obedience, not prayer frequency", "Regular, consistent prayer is the maintenance system of anointing — it is the ongoing connection to the source that keeps the power active and the channel unblocked", "The anointing in Vincenzo's life is so extraordinary that it operates even when his prayer life weakens", "The story leaves the relationship between prayer and anointing deliberately implicit rather than directly teaching it"],
+      ans: 1,
+      exp: "Every major moment of miraculous power in the story is preceded by prayer — Vincenzo's pre-pulpit prayer, his prayer in the forest, his lifestyle of communion with Senior Dad. Prayer is the infrastructure of his anointing."
+    },
+    {
+      id: 197,
+      q: "What does the story's portrayal of the Septet as a seven-member unit communicate about the value of spiritual community?",
+      opts: ["Seven is a number of completeness — having exactly seven members is a deliberate spiritual arrangement, not coincidence", "Spiritual gifting and ministry calling are best expressed in community — no single believer is designed to carry the full expression of God's purpose alone", "The Septet exists primarily as a practical music team for Vincenzo's crusades — the spiritual symbolism is secondary", "Community provides emotional support for ministry — the relational aspect is more important than the spiritual cooperation"],
+      ans: 1,
+      exp: "The Septet is more than a band — they are a covenant spiritual community where each member's gift complements the others. The story consistently shows that Vincenzo's ministry effectiveness is multiplied by, not despite, this community."
+    },
+    {
+      id: 198,
+      q: "What does Oreofe's dream — and Vincenzo's interpretation of it — reveal about how the story treats the prophetic dimension of dreams?",
+      opts: ["Dreams are unreliable and primarily psychological — Vincenzo's interpretation proves they should not be taken literally", "Dreams can be prophetic warnings, but they can also be emotional expressions — wisdom and spiritual maturity are needed to discern the difference", "All vivid dreams involving ministry figures are prophetic and should always be taken as literal warnings requiring immediate action", "The story dismisses the prophetic significance of dreams entirely — Vincenzo's interpretation deflates what Oreofe thought was a divine warning"],
+      ans: 1,
+      exp: "Vincenzo's careful interpretation demonstrates prophetic maturity — he neither dismisses the dream as meaningless nor over-spiritualizes it as a literal prophecy. He reads it as emotional truth about Oreofe's fears, while remaining open to the spiritual dimension."
+    },
+    {
+      id: 199,
+      q: "What does the contrast between Vincenzo's public ministry power and his private emotional struggles communicate to the reader?",
+      opts: ["That anointing and character are not necessarily connected — a person can be powerfully used by God while being emotionally immature", "That extraordinary gifting does not exempt anyone from the ordinary human struggles of the heart — Vincenzo is fully human even in his extraordinary calling", "That Vincenzo is spiritually underdeveloped in the area of emotional intelligence and needs more growth", "That the enemy specifically targets the private lives of those with great public ministries — Vincenzo is simply a casualty of this pattern"],
+      ans: 1,
+      exp: "Vincenzo's private struggle with his feelings for Hadassah makes him profoundly relatable — the most gifted person in every room still wrestles with human love, desire, and the cost of obedience. This is the story's most humanizing thread."
+    },
+    {
+      id: 200,
+      q: "What does the overall narrative arc of Prophet Vincenzo communicate as its central theme?",
+      opts: ["That miracles and supernatural power are the primary evidence of God's presence and favor", "That extraordinary calling requires extraordinary consecration — and the more God has placed in a person, the more carefully that gift must be guarded, sustained, and submitted to God's authority", "That romantic love and divine purpose are fundamentally in conflict and must be sacrificed for ministry", "That suffering is random and God's sovereignty means accepting unexplained pain as His mysterious will"],
+      ans: 1,
+      exp: "The story's central thread — from Vincenzo's 22-year consecration, to his guarded heart, to Oreofe's faith through suffering — is that extraordinary purpose demands extraordinary stewardship. The gift is not the point; faithfulness with the gift is."
+    }
+  ];
+  </script>
+
+  <!-- ===================== APP LOGIC ===================== -->
+  <script>
+    /* ---------- Utilities ---------- */
+    function cryptoShuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const buf = new Uint32Array(1);
+        window.crypto.getRandomValues(buf);
+        const j = buf[0] % (i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    /* ---------- State ---------- */
+    let quizQuestions = [];
+    let currentIndex = 0;
+    let userAnswers = [];
+    let timerInterval = null;
+    const TOTAL_TIME = 15 * 60;
+
+    /* ---------- DOM Refs ---------- */
+    const screens = {
+      landing: document.getElementById('landing-screen'),
+      quiz:    document.getElementById('quiz-screen'),
+      results: document.getElementById('results-screen'),
+      review:  document.getElementById('review-screen')
+    };
+
+    const els = {
+      timerText:      document.getElementById('timer-text'),
+      timerRing:      document.querySelector('.timer-progress'),
+      progressBar:    document.getElementById('progress-bar'),
+      counter:        document.getElementById('question-counter'),
+      questionText:   document.getElementById('question-text'),
+      optionsBox:     document.getElementById('options-container'),
+      prevBtn:        document.getElementById('prev-btn'),
+      nextBtn:        document.getElementById('next-btn'),
+      submitBtn:      document.getElementById('submit-btn'),
+      navPanel:       document.getElementById('nav-panel'),
+      navGrid:        document.getElementById('nav-grid'),
+      scorePercent:   document.getElementById('score-percent'),
+      scoreCircle:    document.getElementById('score-circle'),
+      statCorrect:    document.getElementById('stat-correct'),
+      statWrong:      document.getElementById('stat-wrong'),
+      statSkipped:    document.getElementById('stat-skipped'),
+      statTime:       document.getElementById('stat-time'),
+      reviewBox:      document.getElementById('review-container')
+    };
+
+    /* ---------- Core Quiz Logic ---------- */
+    function initQuiz() {
+      if (!window.ALL_QUESTIONS || !Array.isArray(window.ALL_QUESTIONS)) {
+        alert('Error: Question data not found.');
+        return;
+      }
+
+      // 1. Shuffle full bank and pick 50
+      const shuffledPool = cryptoShuffle(window.ALL_QUESTIONS);
+      const selected = shuffledPool.slice(0, 50);
+
+      // 2. Shuffle options within each question and remap correct index
+      quizQuestions = selected.map(q => {
+        const wrapped = q.opts.map((text, idx) => ({ text, originalIdx: idx }));
+        const shuffledOpts = cryptoShuffle(wrapped);
+        const newAns = shuffledOpts.findIndex(o => o.originalIdx === q.ans);
+        return {
+          id: q.id,
+          q: q.q,
+          opts: shuffledOpts.map(o => o.text),
+          ans: newAns,
+          exp: q.exp
+        };
+      });
+
+      userAnswers = new Array(50).fill(null);
+      currentIndex = 0;
+      timeLeft = TOTAL_TIME;
+
+      showScreen(screens.quiz);
+      renderQuestion();
+      renderNav();
+      startTimer();
+    }
+
+    let timeLeft = TOTAL_TIME;
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      updateTimerUI();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerUI();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          finishQuiz(true);
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      els.timerText.textContent = formatTime(timeLeft);
+      const r = 45;
+      const circumference = 2 * Math.PI * r;
+      const offset = circumference - (timeLeft / TOTAL_TIME) * circumference;
+      els.timerRing.style.strokeDashoffset = offset;
+
+      if (timeLeft <= 60) els.timerRing.style.stroke = 'var(--wrong)';
+      else if (timeLeft <= 300) els.timerRing.style.stroke = 'var(--skipped)';
+      else els.timerRing.style.stroke = 'var(--accent-gold)';
+    }
+
+    function renderQuestion() {
+      const q = quizQuestions[currentIndex];
+      els.questionText.textContent = `${currentIndex + 1}. ${q.q}`;
+      els.counter.textContent = `${currentIndex + 1} / 50`;
+
+      els.optionsBox.innerHTML = '';
+      q.opts.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.dataset.label = String.fromCharCode(65 + idx);
+        btn.textContent = opt;
+        if (userAnswers[currentIndex] === idx) btn.classList.add('selected');
+        btn.addEventListener('click', () => selectOption(idx));
+        els.optionsBox.appendChild(btn);
+      });
+
+      els.prevBtn.disabled = currentIndex === 0;
+
+      if (currentIndex === 49) {
+        els.nextBtn.classList.add('hidden');
+        els.submitBtn.classList.remove('hidden');
+      } else {
+        els.nextBtn.classList.remove('hidden');
+        els.submitBtn.classList.add('hidden');
+      }
+
+      updateProgress();
+      updateNav();
+    }
+
+    function selectOption(idx) {
+      userAnswers[currentIndex] = idx;
+      renderQuestion();
+      updateNav();
+    }
+
+    function nextQuestion() {
+      if (currentIndex < 49) {
+        currentIndex++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    function updateProgress() {
+      const answered = userAnswers.filter(a => a !== null).length;
+      const pct = (answered / 50) * 100;
+      els.progressBar.style.width = `${pct}%`;
+    }
+
+    /* ---------- Navigator ---------- */
+    function renderNav() {
+      els.navGrid.innerHTML = '';
+      for (let i = 0; i < 50; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'nav-dot';
+        btn.textContent = i + 1;
+        if (i === currentIndex) btn.classList.add('current');
+        if (userAnswers[i] !== null) btn.classList.add('answered');
+        btn.addEventListener('click', () => {
+          currentIndex = i;
+          renderQuestion();
+        });
+        els.navGrid.appendChild(btn);
+      }
+    }
+
+    function updateNav() {
+      const dots = els.navGrid.querySelectorAll('.nav-dot');
+      dots.forEach((btn, i) => {
+        btn.classList.toggle('current', i === currentIndex);
+        btn.classList.toggle('answered', userAnswers[i] !== null);
+      });
+    }
+
+    /* ---------- Finish & Results ---------- */
+    function finishQuiz(timeExpired = false) {
+      clearInterval(timerInterval);
+
+      let correct = 0, wrong = 0, skipped = 0;
+      quizQuestions.forEach((q, i) => {
+        if (userAnswers[i] === null) skipped++;
+        else if (userAnswers[i] === q.ans) correct++;
+        else wrong++;
+      });
+
+      const scorePct = Math.round((correct / 50) * 100);
+      const timeUsed = TOTAL_TIME - timeLeft;
+
+      els.scorePercent.textContent = `${scorePct}%`;
+      els.scoreCircle.style.setProperty('--score-deg', `${(scorePct / 100) * 360}deg`);
+
+      els.statCorrect.textContent = correct;
+      els.statWrong.textContent = wrong;
+      els.statSkipped.textContent = skipped;
+      els.statTime.textContent = formatTime(timeUsed);
+
+      showScreen(screens.results);
+
+      if (timeExpired) {
+        setTimeout(() => alert('Time is up! Your quiz has been submitted automatically.'), 100);
+      }
+    }
+
+    /* ---------- Review Mode ---------- */
+    function showReview() {
+      els.reviewBox.innerHTML = '';
+
+      quizQuestions.forEach((q, i) => {
+        const userAns = userAnswers[i];
+        const isCorrect = userAns === q.ans;
+        const isSkipped = userAns === null;
+
+        const card = document.createElement('div');
+        card.className = `review-card ${isSkipped ? 'skipped' : isCorrect ? 'correct' : 'wrong'}`;
+
+        const badge = isSkipped
+          ? '<span class="badge skipped">Skipped</span>'
+          : isCorrect
+            ? '<span class="badge correct">Correct</span>'
+            : '<span class="badge wrong">Wrong</span>';
+
+        const optsHtml = q.opts.map((opt, idx) => {
+          let cls = '';
+          if (idx === q.ans) cls = 'correct-ans';
+          if (idx === userAns && !isCorrect) cls = 'wrong-ans';
+          return `<div class="review-opt ${cls}">${String.fromCharCode(65 + idx)}. ${opt}</div>`;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="review-top">
+            <h3>Q${i + 1}: ${q.q}</h3>
+            ${badge}
+          </div>
+          <div class="review-opts">${optsHtml}</div>
+          <div class="review-exp">${q.exp}</div>
+        `;
+
+        els.reviewBox.appendChild(card);
+      });
+
+      showScreen(screens.review);
+    }
+
+    /* ---------- Screen Helpers ---------- */
+    function showScreen(screenEl) {
+      Object.values(screens).forEach(s => s.classList.remove('active'));
+      screenEl.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ---------- Event Listeners ---------- */
+    document.getElementById('start-btn').addEventListener('click', initQuiz);
+
+    els.nextBtn.addEventListener('click', nextQuestion);
+    els.prevBtn.addEventListener('click', prevQuestion);
+
+    document.getElementById('nav-toggle').addEventListener('click', () => {
+      els.navPanel.classList.toggle('hidden');
+    });
+
+    els.submitBtn.addEventListener('click', () => {
+      const skipped = userAnswers.filter(a => a === null).length;
+      if (skipped > 0) {
+        const ok = confirm(`You have ${skipped} unanswered question(s). Submit anyway?`);
+        if (!ok) return;
+      }
+      finishQuiz(false);
+    });
+
+    document.getElementById('review-btn').addEventListener('click', showReview);
+    document.getElementById('close-review-btn').addEventListener('click', () => showScreen(screens.results));
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      clearInterval(timerInterval);
+      els.navPanel.classList.add('hidden');
+      showScreen(screens.landing);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (!screens.quiz.classList.contains('active')) return;
+
+      if (e.key === 'ArrowRight') nextQuestion();
+      if (e.key === 'ArrowLeft') prevQuestion();
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        selectOption(parseInt(e.key) - 1);
+      }
+    });
+  </script>
+</body>
+</html>
