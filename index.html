@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prophet Vincenzo — Elite Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- LANDING SCREEN -->
+    <div id="landing-screen" class="screen active">
+      <div class="hero">
+        <h1>Prophet Vincenzo</h1>
+        <p class="subtitle">Elite MCQ Challenge</p>
+        <div class="quiz-meta">
+          <span>📚 50 Questions</span>
+          <span>⏱️ 15 Minutes</span>
+          <span>🔐 Crypto-Shuffled</span>
+        </div>
+        <button id="start-btn" class="btn-primary">Begin Quiz</button>
+      </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen">
+      <header class="quiz-header">
+        <div class="timer-container" title="Time Remaining">
+          <svg class="timer-ring" viewBox="0 0 100 100">
+            <circle class="timer-bg" cx="50" cy="50" r="45" />
+            <circle class="timer-progress" cx="50" cy="50" r="45" />
+          </svg>
+          <span id="timer-text" class="timer-text">15:00</span>
+        </div>
+
+        <div class="header-center">
+          <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="question-counter" id="question-counter">1 / 50</div>
+        </div>
+
+        <button id="nav-toggle" class="nav-toggle" title="Question Navigator">☰</button>
+      </header>
+
+      <div id="nav-panel" class="nav-panel hidden">
+        <div class="nav-grid" id="nav-grid"></div>
+      </div>
+
+      <main class="quiz-main">
+        <div id="question-card" class="question-card">
+          <h2 id="question-text" class="question-text">Loading…</h2>
+          <div id="options-container" class="options-container"></div>
+        </div>
+      </main>
+
+      <footer class="quiz-footer">
+        <button id="prev-btn" class="btn-secondary" disabled>← Previous</button>
+        <button id="next-btn" class="btn-primary">Next →</button>
+        <button id="submit-btn" class="btn-success hidden">Submit Quiz</button>
+      </footer>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="results-screen" class="screen">
+      <div class="results-card">
+        <h2>Quiz Complete</h2>
+        <div class="score-circle" id="score-circle">
+          <span id="score-percent">0%</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat"><span id="stat-correct">0</span> Correct</div>
+          <div class="stat"><span id="stat-wrong">0</span> Wrong</div>
+          <div class="stat"><span id="stat-skipped">0</span> Skipped</div>
+          <div class="stat"><span id="stat-time">00:00</span> Time Used</div>
+        </div>
+        <div class="results-actions">
+          <button id="review-btn" class="btn-primary">Review Answers</button>
+          <button id="restart-btn" class="btn-secondary">Try Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW SCREEN -->
+    <div id="review-screen" class="screen">
+      <header class="review-header">
+        <h2>Answer Review</h2>
+        <button id="close-review-btn" class="btn-secondary">← Back to Results</button>
+      </header>
+      <div id="review-container" class="review-container"></div>
+    </div>
+
+  </div>
+
+  <!-- Load your question bank FIRST, then the app logic -->
+  <script src="questions.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
